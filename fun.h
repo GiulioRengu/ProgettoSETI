@@ -1,11 +1,12 @@
 #ifndef FUN_H
-#define FUN_h
+#define FUN_H
 
 typedef struct friends{
     char* name;
     struct friends* next;
     struct friends* prev;
 } friends;
+
 typedef friends* friendsList;
 
 typedef struct{

@@ -1,6 +1,7 @@
-#include "fun.h"
 #include <stdio.h>
 #include<string.h>
+
+#include "fun.h"
 
 int main(){
     user* u = createNewUser("failopps", 6741, 16164);
