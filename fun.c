@@ -1,26 +1,39 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>  // Per isalnum()
+
 #include "fun.h"
 
-/*
-    Crea un nuovo utente (user) che ha id, password e porta UDP.
- * 
-@param id Nome dell'utente.
-@param password password dell'utente.
-@param port numero della porta UDP dell'utente.
 
-@return Un puntatore ad un nuovo oggetto user allocato.
- */
-user* createNewUser(char* id, unsigned password, unsigned port){
-    user* ret = malloc(sizeof(user));
-    if(ret==NULL) return NULL;
+int checkValidData(char* id, unsigned port, unsigned password)
+{
+    if(id==NULL || id[0]=='\0')
+        return 1;
 
-    ret->id=malloc(strlen(id)+1);
+    for(int i=0; id[i]!='\0'; i++)
+        if(!isalnum(id[i]))
+            return 1;
+
+
+    if(port==0 || port>9999)
+        return 2;
+
+    if(password>65535)
+        return 3;
+
+    return 0;
+}
+
+user* createNewUser(char* id, unsigned port, unsigned password){
+    user* ret=malloc(sizeof(user));
+    if(ret==NULL) 
+        return NULL;
+
     strcpy(ret->id, id);
     ret->port=port;
     ret->password=password;
     ret->listOfFriends=NULL;
+
     return ret;
 }
-
