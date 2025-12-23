@@ -2,7 +2,7 @@
 #define FUN_H
 
 typedef struct friends{
-    user* friend_user;
+    struct user* friend_user;
     struct friends* next;
     struct friends* prev;
 } friends;

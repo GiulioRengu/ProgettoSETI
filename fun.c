@@ -11,6 +11,9 @@ int checkValidData(char* id, unsigned port, unsigned password)
     if(id==NULL || id[0]=='\0')
         return 1;
 
+    if(strlen(id)>=8)
+        return 1;
+
     for(int i=0; id[i]!='\0'; i++)
         if(!isalnum(id[i]))
             return 1;
@@ -19,7 +22,7 @@ int checkValidData(char* id, unsigned port, unsigned password)
     if(port==0 || port>9999)
         return 2;
 
-    if(password>65535)
+    if(password>65535 || password<0)
         return 3;
 
     return 0;
@@ -27,7 +30,7 @@ int checkValidData(char* id, unsigned port, unsigned password)
 
 user* createNewUser(char* id, unsigned port, unsigned password){
     user* ret=malloc(sizeof(user));
-    if(ret==NULL) 
+    if(ret==NULL)
         return NULL;
 
     strcpy(ret->id, id);
