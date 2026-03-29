@@ -1,6 +1,13 @@
 #ifndef FUN_H
 #define FUN_H
 
+typedef enum{
+    ID,
+    PASS,
+    PORT,
+    //da aggiungere tutti i codici possibili
+} MSG_TYPE;
+
 typedef struct friends{
     struct user* friend_user;
     struct friends* next;

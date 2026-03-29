@@ -31,7 +31,7 @@ int main(){
     if(valid==0)
     {
         if(u!=NULL)
-            printf("\n\nUtente creato: %s\nPorta %d\nPassword %d\n", u->id, u->port, u->password);
+            printf("\n\nUtente creato: %s\nPorta: %d\nPassword: %d\n", u->id, u->port, u->password);
     }
     printf("\n%d\n", valid);
 }
