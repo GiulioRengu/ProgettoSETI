@@ -3,7 +3,7 @@
 #include <string.h>
 #include <ctype.h>  // Per isalnum()
 
-#include "fun.h"
+#include "serverhandlers.h"
 
 int checkValidData(char* id, unsigned port, unsigned password)
 {
@@ -27,15 +27,14 @@ int checkValidData(char* id, unsigned port, unsigned password)
     return 0;
 }
 
-user* createNewUser(char* id, unsigned port, unsigned password){
-    user* ret=malloc(sizeof(user));
+User* createNewUser(char* id, unsigned port, unsigned password){
+    User* ret=malloc(sizeof(User));
     if(ret==NULL)
         return NULL;
 
     strcpy(ret->id, id);
-    ret->port=port;
+    ret->udp_port=port;
     ret->password=password;
-    ret->listOfFriends=NULL;
 
     return ret;
 }
