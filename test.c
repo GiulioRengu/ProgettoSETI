@@ -3,7 +3,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "fun.h"
+#include "server.h"
+#include "serverhandlers.h"
 
 int main(){
     char id[8], port[6], pass[7];
@@ -25,13 +26,13 @@ int main(){
     fgets(pass, sizeof(pass), stdin);
     pass[strcspn(pass, "\n")] = '\0';
 
-    user* u = createNewUser(id, atoi(port), atoi(pass));
+    User* u = createNewUser(id, atoi(port), atoi(pass));
     int valid=checkValidData(id, atoi(port), atoi(pass));
 
     if(valid==0)
     {
         if(u!=NULL)
-            printf("\n\nUtente creato: %s\nPorta: %d\nPassword: %d\n", u->id, u->port, u->password);
+            printf("\n\nUtente creato: %s\nPorta: %d\nPassword: %d\n", u->id, u->tcp_fd, u->password);
     }
     printf("\n%d\n", valid);
 }

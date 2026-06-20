@@ -1,28 +1,6 @@
-#ifndef FUN_H
-#define FUN_H
-
-typedef enum{
-    ID,
-    PASS,
-    PORT,
-    //da aggiungere tutti i codici possibili
-} MSG_TYPE;
-
-typedef struct friends{
-    struct user* friend_user;
-    struct friends* next;
-    struct friends* prev;
-} friends;
-
-typedef friends* friendsList;
-
-typedef struct{
-    char id[8];
-    unsigned password;
-    unsigned port;
-    int socket;
-    friendsList listOfFriends;
-} user;
+#ifndef SERVERFUN_H
+#define SERVERFUN_H
+#include "server.h"
 
 /**
  * 
@@ -54,6 +32,8 @@ int checkValidData(char* id, unsigned port, unsigned password);
  * 
  * @return Puntatore al nuovo utente creato, o NULL se fallisce l'allocazione.
  */
-user* createNewUser(char* id, unsigned port, unsigned password);
+User* createNewUser(char* id, unsigned port, unsigned password);
+
+
 
 #endif
