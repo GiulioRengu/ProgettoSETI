@@ -7,7 +7,7 @@
 #include "serverhandlers.h"
 
 int main(){
-    char id[8], port[6], pass[7];
+    char id[ID_LENGTH+2], port[6], pass[7];
 
     fgets(id, sizeof(id), stdin);
     //questo serve per fermare subito l'input se l'id è troppo lungo ma dovremo farlo poi nel server.c (credo)
@@ -19,7 +19,7 @@ int main(){
         return 1;
     }
     id[strcspn(id, "\n")] = '\0'; //https://stackoverflow.com/questions/2693776/removing-trailing-newline-character-from-fgets-input
-    
+
     fgets(port, sizeof(port), stdin);
     port[strcspn(port, "\n")] = '\0';
 

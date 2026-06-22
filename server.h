@@ -2,6 +2,9 @@
 #define SERVER_H
 #include <stdint.h>
 
+#define MAX_USERS 100
+#define ID_LENGTH 8
+
 typedef enum{
     STREAM_FRIEND_REQ, //[0XX]
     STREAM_FRIEND_ACC, //[1XX]
@@ -12,25 +15,26 @@ typedef enum{
 
 typedef struct Stream{ //per le notifiche UDP
     StreamType type;
-    char from_id[9];
+    char from_id[ID_LENGTH+1];
     char msg[201];
-    Stream *next;
+    struct Stream *next;
 }Stream;
 
 typedef struct User{
-    char id[9];
+    char id[ID_LENGTH+1];
     uint16_t password;
     uint16_t udp_port;
     int tcp_fd;
     int connected; //0 connesso, -1 non connesso;
-    char friends[100][9];
+    char friends[MAX_USERS][ID_LENGTH+1];
     int friend_count;
     int stream_count;
-    Stream *streams;
+
+    struct Stream *streams;
 } User;
 
 typedef struct {
-    User users[100];
+    User users[MAX_USERS];
     int client_count;
     int tcp_fd;
 } Server;
