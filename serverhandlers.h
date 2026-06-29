@@ -1,6 +1,6 @@
 #ifndef SERVERFUN_H
 #define SERVERFUN_H
-#include "server.h"
+#include "server&client/protocol.h"
 
 /**
  * 

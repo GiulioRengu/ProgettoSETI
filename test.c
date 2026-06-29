@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "server.h"
+#include "server&client/protocol.h"
 #include "serverhandlers.h"
 
 int main(){
