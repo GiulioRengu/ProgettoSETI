@@ -5,6 +5,15 @@
 #include <stdint.h>
 #include <netinet/in.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <signal.h>
+#include <sys/select.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <errno.h>
 
 #define MAX_USERS 100
 #define ID_LENGTH 8
@@ -41,8 +50,6 @@ typedef struct User{
 
     struct Stream *streams;
     int stream_count;
-    bool has_stream;
-
 } User;
 
 typedef struct {
