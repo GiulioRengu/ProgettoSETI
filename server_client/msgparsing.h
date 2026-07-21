@@ -25,10 +25,10 @@
   void build_conne(char *buff, const char *id, uint16_t password);
 
   // [FRIE? id]
-  void build_frie_req(char *buff, const char *id){ sprintf(buff, "FRIE? %s+++", id) }
+  void build_frie_req(char *buff, const char *id);
 
   // [MESS? id mess]
-  void build_mess_req(char *buff, const char *id, const char *mess){ sprintf(buff, "")}
+  void build_mess_req(char *buff, const char *id, const char *mess);
 
   // [FLOO? mess]
   void build_floo_req(char *buff, const char *mess);
