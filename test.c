@@ -36,14 +36,11 @@ int main(){
     // }
     // printf("\n%d\n", valid);
 
-    char* prova = "REGIS FAILOPPS 123 567";
-    char* buff;
-    int offset = 0;
-    int len = strlen(prova);
-    while(offset < len){
-        parse_msg(prova, buff, offset);
-        offset += strlen(buff) +1 ;
-        printf("%s\n", buff);
-        //printf("%d\n", offset);
-    }
+    char buff [64]; 
+    build_regis(buff, "ciao1234", 19, 1069);
+int total_len = 19 + 2 + 4;  // offset prima di password + 2 byte + "+++\0"
+for (int i = 0; i < total_len; i++) {
+    printf("%02X ", (unsigned char)buff[i]);
+}
+printf("\n");
 }
