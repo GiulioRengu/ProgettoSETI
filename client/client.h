@@ -1,7 +1,7 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
-#include "../server&client/protocol.h"
+#include "../server_client/protocol.h"
 
 typedef struct {
     char id[ID_LENGTH+1];

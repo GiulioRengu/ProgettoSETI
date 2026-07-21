@@ -1,7 +1,7 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-#include "../server&client/protocol.h"
+#include "../server_client/protocol.h"
 
 
 // Inizializza il server mettendolo in ascolto su una porta TCP (inferiore a 9999) [cite: 33]
