@@ -1,7 +1,6 @@
 #ifndef PROTOCOL_H
 #define PROTOCOL_H
 
-
 #include <stdint.h>
 #include <netinet/in.h>
 #include <stdbool.h>
@@ -22,11 +21,11 @@
 #define MSG_LENGTH_MAX 200
 
 typedef enum{
-    STREAM_FRIEND_REQ = 0, //[0XX]
-    STREAM_FRIEND_ACC = 1, //[1XX]
-    STREAM_FRIEND_REJ = 2, //[2XX]
-    STREAM_MSG = 3,        //[3XX]
-    STREAM_FLOO= 4,       //[4XX]
+    STREAM_FRIEND_REQ, //[0XX]
+    STREAM_FRIEND_ACC, //[1XX]
+    STREAM_FRIEND_REJ, //[2XX]
+    STREAM_MSG,        //[3XX]
+    STREAM_FLOO,       //[4XX]
 } StreamType;
 
 typedef struct Stream{ //per le notifiche UDP

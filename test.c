@@ -35,12 +35,9 @@ int main(){
     //         printf("\n\nUtente creato: %s\nPorta: %d\nPassword: %d\n", u->id, u->tcp_fd, u->password);
     // }
     // printf("\n%d\n", valid);
+    char buff[32];
+    build_udp_notif(buff, STREAM_FLOO, 13);
+    printf("%s", buff);
 
-    char buff [64]; 
-    build_regis(buff, "ciao1234", 19, 1069);
-int total_len = 19 + 2 + 4;  // offset prima di password + 2 byte + "+++\0"
-for (int i = 0; i < total_len; i++) {
-    printf("%02X ", (unsigned char)buff[i]);
-}
-printf("\n");
+
 }
