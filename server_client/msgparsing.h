@@ -46,8 +46,22 @@ typedef enum {
     MSG_UNKNOWN
 } MsgType;
 
+/**
+* controlla se la stringa ha delim +++, se lo ha restituisce il suo indice, altrimenti 0.
+*/
+int has_delim(char* buff, int offset);
+
+void parse(char *src, char* dest, int offset);
+
+void get_type(char* buff, char* type);
+// offset=5+1 (type + space)
+void get_id(char* buff, char* id, int offset);
+// offset=6+9 (type + id + port + spaces)
+void get_port(char* buff, char* port, int offset);
+// offset=16 (everything above + 1)
+void get_msg(char*buff, char* msg, int offset);
+
 // primi 5 byte del messaggio, per capire di che tipo è
-void parse_msg(char *src, char* dest, int offset);
 
 /*------------------------
 *builder client to server

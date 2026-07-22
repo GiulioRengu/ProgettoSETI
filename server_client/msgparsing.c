@@ -1,19 +1,59 @@
 #include "msgparsing.h"
 
-void parse_msg(char *src, char *dest, int offset)
-{
-  if (src == NULL || dest == NULL)
-    return;
-  int len = strlen(src);
 
-  if (offset >= len)
-  {
-    dest[0] = '\0';
-    return;
-  }
+/*------------------------
+*   parsing of messages
+-------------------------*/
 
-  char *aux = src + offset;
-  sscanf(aux, "%s", dest);
+int has_delim(char* buff, int offset){
+    int plus_count = 0;
+    int max_len = strlen(buff);
+    for(unsigned i = offset; max_len; i++){
+        if(buff[i] == ' ') return 0;
+        if(buff[i] == '+') {
+            plus_count++;
+            if(plus_count == 3) return i-2;
+        }
+        else plus_count = 0;
+    }
+    return 0;
+}
+
+void parse(char *src, char* dest, int offset){
+    if(src == NULL || dest == NULL) return;
+    int len = strlen(src);
+
+    if(offset >= len){
+        dest[0] = '\0';
+        return;
+    }
+
+    char* aux = src+offset;
+
+    int delim_index = has_delim(src, offset);
+    if(delim_index != 0){
+        int to_copy = delim_index - offset;
+        strncpy(dest, aux, to_copy);
+        dest[to_copy] = '\0';
+    }
+
+    else sscanf(aux, "%s", dest);
+}
+
+void get_type(char* buff, char* type){
+    parse(buff, type, 0);
+}
+
+void get_id(char* buff, char* id, int offset){
+    parse(buff, id, offset);
+}
+
+void get_port(char* buff, char* port, int offset){
+    parse(buff, port, offset);
+}
+
+void get_msg(char*buff, char* msg, int offset){
+    parse(buff, msg, offset);
 }
 
 /*------------------------
@@ -119,9 +159,9 @@ void build_nofri(char *buff, const char *id) { sprintf(buff, "NOFRI> %s+++", id)
 // [NOCON]
 void build_nocon(char *buff) { strcpy(buff, "NOCON+++"); }
 
-/* ==========================================================================
- * BUILDER: NOTIFICHE UDP
- * ========================================================================== */
+/*------------------------
+ * builder udp notif
+ * -----------------------*/
 
 // [YXX]
 void build_udp_notif(char *buff, StreamType type, int stream_count)
