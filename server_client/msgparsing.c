@@ -40,12 +40,41 @@ void parse(char *src, char* dest, int offset){
     else sscanf(aux, "%s", dest);
 }
 
-void get_type(char* buff, char* type){
+int get_type(char* buff, char* type){
     parse(buff, type, 0);
+    if (strncmp(type, "REGIS", 5) == 0) return MSG_REGIS;
+    if (strncmp(type, "CONNE", 5) == 0) return MSG_CONNE;
+    if (strncmp(type, "FRIE?", 5) == 0) return MSG_FRIE_REQ;
+    if (strncmp(type, "MESS?", 5) == 0) return MSG_MESS_REQ;
+    if (strncmp(type, "FLOO?", 5) == 0) return MSG_FLOO_REQ;
+    if (strncmp(type, "LIST?", 5) == 0) return MSG_LIST_REQ;
+    if (strncmp(type, "CONSU", 5) == 0) return MSG_CONSU;
+    if (strncmp(type, "OKIRF", 5) == 0) return MSG_OKIRF;
+    if (strncmp(type, "NOKRF", 5) == 0) return MSG_NOKRF;
+    if (strncmp(type, "IQUIT", 5) == 0) return MSG_IQUIT;
+    if (strncmp(type, "WELCO", 5) == 0) return MSG_WELCO;
+    if (strncmp(type, "GOBYE", 5) == 0) return MSG_GOBYE;
+    if (strncmp(type, "HELLO", 5) == 0) return MSG_HELLO;
+    if (strncmp(type, "FRIE>", 5) == 0) return MSG_FRIE_OK;
+    if (strncmp(type, "FRIE<", 5) == 0) return MSG_FRIE_KO;
+    if (strncmp(type, "MESS>", 5) == 0) return MSG_MESS_OK;
+    if (strncmp(type, "MESS<", 5) == 0) return MSG_MESS_KO;
+    if (strncmp(type, "FLOO>", 5) == 0) return MSG_FLOO_OK;
+    if (strncmp(type, "RLIST", 5) == 0) return MSG_RLIST;
+    if (strncmp(type, "LINUM", 5) == 0) return MSG_LINUM;
+    if (strncmp(type, "SSEM>", 5) == 0) return MSG_SSEM;
+    if (strncmp(type, "OOLF>", 5) == 0) return MSG_OOLF;
+    if (strncmp(type, "EIRF>", 5) == 0) return MSG_EIRF;
+    if (strncmp(type, "ACKRF", 5) == 0) return MSG_ACKRF;
+    if (strncmp(type, "FRIEN", 5) == 0) return MSG_FRIEN;
+    if (strncmp(type, "NOFRI", 5) == 0) return MSG_NOFRI;
+    if (strncmp(type, "NOCON", 5) == 0) return MSG_NOCON;
+
+    return MSG_UNKNOWN;
 }
 
-void get_id(char* buff, char* id, int offset){
-    parse(buff, id, offset);
+void get_id(char* buff, char* id){
+    parse(buff, id, 6);
 }
 
 void get_port(char* buff, char* port, int offset){

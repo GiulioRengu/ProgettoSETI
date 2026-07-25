@@ -6,11 +6,7 @@
  * messaggio:
  * read type + data extraction
  */
-/**
-* REGIS, WELCO, GOBYE, CONNE, HELLO, FRIE?, FRIE>, FRIE<,
-* MESS?, MESS>, MESS<, FLOO>, FLOO?, LIST?, RLIST, LINUM,
-* CONSU, SSEM>,OOLF>, EIRF>, OKIRF, NOKRF, ACKRF, FRIEN, NOFRI, NOCON
-*/
+
 
 typedef enum {
     /* client → server */
@@ -53,12 +49,12 @@ int has_delim(char* buff, int offset);
 
 void parse(char *src, char* dest, int offset);
 
-void get_type(char* buff, char* type);
-// offset=5+1 (type + space)
-void get_id(char* buff, char* id, int offset);
-// offset=6+9 (type + id + port + spaces)
+int get_type(char* buff, char* type);
+// offset=6 (type + space)
+void get_id(char* buff, char* id);
+// offset=15 (type + id + port + spaces)
 void get_port(char* buff, char* port, int offset);
-// offset=16 (everything above + 1)
+// offset dipende
 void get_msg(char*buff, char* msg, int offset);
 
 // primi 5 byte del messaggio, per capire di che tipo è
