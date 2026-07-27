@@ -203,5 +203,5 @@ int net_is_valid_msg(char *msg){
     int len = strlen(msg);
     if (len > 200) return -1;
 
-    return (strstr(msg, "+++") != NULL) ? -1 : 0; //se get_msg ritorna una stringa con meno caratteri significa che msg conteneva +++
+    return (strstr(msg, "+++") != NULL) ? -1 : 0; //se msg ha +++ ritorna -1
 }
