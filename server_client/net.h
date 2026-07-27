@@ -139,9 +139,9 @@ void net_close(int *fd);
 
 int net_is_valid_id(char *msg);
 
-int net_is_valid_port(char *msg);
+int net_is_valid_port(uint16_t port);
 
-int net_is_valid_password(char *msg);
+int net_is_valid_password(int pwd);
 
 /* controlla che ci sia una sequenza di +++*/
 int net_is_valid_msg(char *msg);

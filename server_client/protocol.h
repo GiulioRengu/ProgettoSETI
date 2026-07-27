@@ -13,6 +13,7 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <errno.h>
+#include <ctype.h>
 
 #define MAX_USERS 100
 #define ID_LENGTH 8

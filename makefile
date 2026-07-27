@@ -7,9 +7,9 @@ CLIENT_DIR = client
 COMMON_DIR = server_client
 
 # File sorgenti (aggiunto msgparsing.c ai sorgenti di test)
-SERVER_SRCS = $(SERVER_DIR)/mainServer.c $(SERVER_DIR)/server.c $(COMMON_DIR)/msgparsing.c
-CLIENT_SRCS = $(CLIENT_DIR)/mainClient.c $(COMMON_DIR)/msgparsing.c
-TEST_SRCS = test.c $(COMMON_DIR)/msgparsing.c
+SERVER_SRCS = $(SERVER_DIR)/mainServer.c $(SERVER_DIR)/server.c $(COMMON_DIR)/msgparsing.c $(COMMON_DIR)/net.c
+CLIENT_SRCS = $(CLIENT_DIR)/mainClient.c $(COMMON_DIR)/msgparsing.c $(COMMON_DIR)/net.c
+TEST_SRCS = test.c $(COMMON_DIR)/msgparsing.c $(COMMON_DIR)/net.c
 
 # File oggetto
 SERVER_OBJS = $(SERVER_SRCS:.c=.o)
