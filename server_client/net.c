@@ -99,7 +99,34 @@ int net_connect_tcp(const char *host, uint16_t port)
 }
 
 
-int net_create_udp_socket(void);
+int net_create_udp_socket(uint16_t port){
+    //controllo porta prima della funzione oppure da inserire in funzione
+    struct sockaddr_in6 server_addr;
+    int sock = socket(AF_INET6, SOCK_DGRAM, 0);
+    if (sock < 0){
+        printf("Errore net_create_udp_socket: socket < 0\n");
+        return -1;
+    }
+
+    int f = 0, r = 0;
+    if ((r = setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, &f, sizeof(f))) < 0){ //provo a modificare IPV6_V6ONLY a false per attivare il dual-stack
+        printf("Avviso net_create_udp_socket: Dual-Stack non attivo\n");
+        f = 1; //imposto f = 1 per ricordarmi che il dual stack non è attivo
+    }
+
+    memset(&server_addr, 0, sizeof(server_addr)); //imposto tutti i byte a 0
+    server_addr.sin6_addr = in6addr_any;
+    server_addr.sin6_family = AF_INET6;
+    server_addr.sin6_port = htons(port);
+
+    if((r = bind(sock, (struct sockaddr*) &server_addr, sizeof(server_addr))) < 0){
+        printf("Errore net_create_udp_socket: bind\n");
+        close(sock);
+        return -1;
+    }
+
+    return sock;
+}
 
 
 /* ═══════════════════════════════════════════════════════════
@@ -134,6 +161,7 @@ int net_accept(int server_fd, char *ip_out, uint16_t *port_out){
         return -1;
     }
 
+    printf("Accettata connessione a %s su fd %d\n", ip_out, server_fd);
     *port_out = ntohs(saddr.sin6_port);
     return new_fd;
 }
@@ -143,7 +171,28 @@ int net_accept(int server_fd, char *ip_out, uint16_t *port_out){
  * RICEZIONE TCP
  * ═══════════════════════════════════════════════════════════ */
 
-int net_recv_msg(int fd, char *buf, int bufsize);
+int net_recv_msg(int fd, char *buf, int bufsize){
+    if (buf == NULL || bufsize <= 0) return -1;
+    int plus_count = 0, received = 0;
+    ssize_t r = 0;
+
+    while(received < bufsize-1){
+        r = recv(fd, buf+received, 1, 0); //scrivo in posizione buf[received]
+        if (r<0){
+            printf("Errore net_recv_msg: recv\n");
+            close(fd);
+            return -1;
+        }
+
+        if (buf[received++] == '+'){ //incremento received
+            plus_count++;
+            if (plus_count == 3) break;
+        }
+        else plus_count = 0;
+    }
+    buf[received] = '\0';
+    return received;
+}
 
 
 /* ═══════════════════════════════════════════════════════════
@@ -177,7 +226,54 @@ int net_send_str(int fd, const char *buf)
  * INVIO UDP (notifiche server → client)
  * ═══════════════════════════════════════════════════════════ */
 
-int net_send_udp(int udp_fd, const User *target, StreamType type, int stream_count);
+int net_send_udp(/*int udp_fd,*/ const User *target, StreamType type, int stream_count){ //forse da togliere udp_fd
+    struct sockaddr_storage dest_addr; //creo indirizzo generico destinatario con sockaddr_storage
+    socklen_t ip_len;                  // in modo da poter contenere sia eventuale ipv6 che ipv4
+    memset(&dest_addr, 0, sizeof(dest_addr));
+    int fd = 0;
+
+    if(strchr(target->ip, ':')){ // controlla se ci sono ':' in ip, se ci sono è mappato ipv6
+        struct sockaddr_in6* v6 = (struct sockaddr_in6*) &dest_addr; // casto dest_addr a sockaddr_in6 e modifico i suoi valori utilizzando puntatore v6
+        v6->sin6_family = AF_INET6;
+        v6->sin6_port = htons(target->udp_port);
+
+        if(inet_pton(AF_INET6, target->ip, &v6->sin6_addr) < 1){
+            printf("Errore net_send_udp: indirizzo ip IPv6\n");
+            return -1;
+        }
+        ip_len = sizeof(struct sockaddr_in6);
+        fd = socket(AF_INET6, SOCK_DGRAM, 0);
+    }
+
+    else{ //indirizzo mappato ipv4, uso sockaddr_in
+        struct sockaddr_in* v4 = (struct sockaddr_in*) &dest_addr;// casto dest_addr a sockaddr_in e modifico i suoi valori utilizzando puntatore v4
+        v4->sin_family = AF_INET;
+        v4->sin_port = htons(target->udp_port);
+        
+        if(inet_pton(AF_INET, target->ip, &v4->sin_addr) < 1){
+            printf("Errore net_send_udp: indirizzo ip IPv4\n");
+            return -1;   
+        }
+        ip_len = sizeof(struct sockaddr_in);
+        fd = socket(AF_INET, SOCK_DGRAM, 0);
+    }
+
+    if (fd < 0){
+        printf("Errore net_send_udp: creazione socket\n");
+        return -1;
+    }
+
+    char tosend[4];
+    build_udp_notif(tosend, type, stream_count);
+    ssize_t sent = sendto(fd, tosend, 3, 0, (struct sockaddr*) &dest_addr, ip_len);
+    if (sent != 3){
+        printf("Errore net_send_udp: invio notifica udp\n");
+        return -1;
+    }
+    close(fd);
+
+    return 0;
+}
 
 
 
@@ -200,8 +296,7 @@ int net_is_valid_password(int pwd){
 }
 
 int net_is_valid_msg(char *msg){
-    int len = strlen(msg);
-    if (len > 200) return -1;
+    if (strlen(msg) > MSG_LENGTH_MAX) return -1;
 
     return (strstr(msg, "+++") != NULL) ? -1 : 0; //se msg ha +++ ritorna -1
 }

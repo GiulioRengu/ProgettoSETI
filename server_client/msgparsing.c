@@ -9,7 +9,7 @@ int has_delim(char* buff, int offset){
     int plus_count = 0;
     int max_len = strlen(buff);
     for(unsigned i = offset; max_len; i++){
-        if(buff[i] == ' ') return 0;
+        if(buff[i] == ' ') return -1;
         if(buff[i] == '+') {
             plus_count++;
             if(plus_count == 3) return i-2;

@@ -42,13 +42,11 @@ int net_create_tcp_server(uint16_t port);
 int net_connect_tcp(const char *host, uint16_t port);
 
 /*
- * Crea un socket UDP da usare per inviare notifiche ai client.
- * Il socket è non bloccante e non è legato a nessuna porta fissa
- * (il SO sceglie una porta effimera).
+ * Crea un socket UDP con porta 'port' da usare per inviare notifiche ai client.
  *
  * Ritorna il fd del socket UDP, o -1 in caso di errore.
  */
-int net_create_udp_socket(void);
+int net_create_udp_socket(uint16_t);
 
 /* ═══════════════════════════════════════════════════════════
  * ACCETTAZIONE CONNESSIONI (server)
@@ -124,7 +122,7 @@ int net_send_str(int fd, const char *buf);
  * NOTA: UDP è fire-and-forget — il client potrebbe non riceverla.
  * Il server non deve bloccarsi ad aspettare conferma.
  */
-int net_send_udp(int udp_fd, const User *target, StreamType type, int stream_count);
+int net_send_udp(/*int udp_fd,*/  const User *target, StreamType type, int stream_count);
 
 /* ═══════════════════════════════════════════════════════════
  * CHIUSURA
