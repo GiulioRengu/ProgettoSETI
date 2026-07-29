@@ -2,12 +2,12 @@
 #define SERVER_H
 
 #include "../server_client/protocol.h"
+#include <sys/select.h>
 
+// Inizializza il server mettendolo in ascolto su una porta TCP (inferiore a 9999)
+int server_init(Server *server, uint16_t port);
 
-// Inizializza il server mettendolo in ascolto su una porta TCP (inferiore a 9999) [cite: 33]
-int server_init(Server *server, uint16_t tcp_port);
-
-// Loop principale del server (gestione epoll/select per client multipli)
+// Loop principale del server (gestione select per client multipli)
 void server_run(Server *server);
 
 // Accetta un nuovo client TCP
@@ -20,7 +20,7 @@ void server_handle_client_msg(Server *server, int client_fd);
 User* get_user_by_id(Server *server, const char *id);
 User* get_user_by_fd(Server *server, int fd);
 
-// Invia una notifica UDP [YXX] al client [cite: 19, 98]
+// Invia una notifica UDP [YXX] al client
 void server_send_udp_notification(Server *server, User *user, StreamType type);
 
 // Aggiunge un flusso alla lista dell'utente e manda notifica

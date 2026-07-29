@@ -55,7 +55,10 @@ typedef struct User{
 typedef struct {
     User users[MAX_USERS];
     int client_count;
-    int tcp_fd;
+    int tcp_fd; //socket TCP listener
+
+    fd_set master_fds;
+    int fdmax;
 } Server;
 
 #endif

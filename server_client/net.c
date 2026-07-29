@@ -65,6 +65,7 @@ int net_connect_tcp(const char *host, uint16_t port)
     if(fd<0)
     {
         printf("Errore nella creazione del socket TCP | Port: %d Reason: %s", port, strerror(errno));
+        close(fd);
         return -1;
     }
 
@@ -104,7 +105,7 @@ int net_create_udp_socket(uint16_t port){
     struct sockaddr_in6 server_addr;
     int sock = socket(AF_INET6, SOCK_DGRAM, 0);
     if (sock < 0){
-        printf("Errore net_create_udp_socket: socket < 0\n");
+        printf("Errore net_create_udp_socket | port: %u Reason: %s", port,strerror(errno));
         return -1;
     }
 
@@ -139,7 +140,7 @@ int net_accept(int server_fd, char *ip_out, uint16_t *port_out){
 
     int new_fd = accept(server_fd, (struct sockaddr*) &saddr, &size);
     if (new_fd < 0){
-        printf("Errore net_accept: accept\n");
+        printf("Errore net_accept: accept  Reason: %s\n", strerror(errno));
         return -1;
     }
 
@@ -179,9 +180,15 @@ int net_recv_msg(int fd, char *buf, int bufsize){
     while(received < bufsize-1){
         r = recv(fd, buf+received, 1, 0); //scrivo in posizione buf[received]
         if (r<0){
-            printf("Errore net_recv_msg: recv\n");
-            close(fd);
+            printf("Errore net_recv_msg: recv  Reason: %s\n", strerror(errno));
+            close(fd); //forse da rimuovere perchè se ne occupa la select (gemini)
             return -1;
+        }
+
+        if(r==0)
+        {
+            printf("Client disconnesso");
+            break;
         }
 
         if (buf[received++] == '+'){ //incremento received
@@ -238,7 +245,7 @@ int net_send_udp(/*int udp_fd,*/ const User *target, StreamType type, int stream
         v6->sin6_port = htons(target->udp_port);
 
         if(inet_pton(AF_INET6, target->ip, &v6->sin6_addr) < 1){
-            printf("Errore net_send_udp: indirizzo ip IPv6\n");
+            printf("Errore net_send_udp | Reason: %s", strerror(errno));
             return -1;
         }
         ip_len = sizeof(struct sockaddr_in6);
@@ -251,7 +258,7 @@ int net_send_udp(/*int udp_fd,*/ const User *target, StreamType type, int stream
         v4->sin_port = htons(target->udp_port);
         
         if(inet_pton(AF_INET, target->ip, &v4->sin_addr) < 1){
-            printf("Errore net_send_udp: indirizzo ip IPv4\n");
+            printf("Errore net_send_udp | Reason: %s", strerror(errno));
             return -1;   
         }
         ip_len = sizeof(struct sockaddr_in);
@@ -259,7 +266,7 @@ int net_send_udp(/*int udp_fd,*/ const User *target, StreamType type, int stream
     }
 
     if (fd < 0){
-        printf("Errore net_send_udp: creazione socket\n");
+        printf("Errore net_send_udp  Reason: %s", strerror(errno));
         return -1;
     }
 
@@ -267,15 +274,13 @@ int net_send_udp(/*int udp_fd,*/ const User *target, StreamType type, int stream
     build_udp_notif(tosend, type, stream_count);
     ssize_t sent = sendto(fd, tosend, 3, 0, (struct sockaddr*) &dest_addr, ip_len);
     if (sent != 3){
-        printf("Errore net_send_udp: invio notifica udp\n");
+        printf("Errore net_send_udp | Reason: %s", strerror(errno));
         return -1;
     }
     close(fd);
 
     return 0;
 }
-
-
 
 /* ═══════════════════════════════════════════════════════════
  * CONTROLLI
