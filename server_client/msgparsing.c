@@ -40,7 +40,8 @@ void parse(char *src, char* dest, int offset){
     else sscanf(aux, "%s", dest);
 }
 
-int get_type(char* buff, char* type){
+int get_type(char* buff){
+    char type[6];
     parse(buff, type, 0);
     if (strncmp(type, "REGIS", 5) == 0) return MSG_REGIS;
     if (strncmp(type, "CONNE", 5) == 0) return MSG_CONNE;

@@ -45,3 +45,66 @@ void server_run(Server *server)
         }
     }
 }
+
+void server_accept_client(Server *server){
+    if(server->client_count >= MAX_USERS){
+        printf("Errore server_accept_client: server->client_count >= MAX_USERS\n");
+        return;
+    }
+
+    char client_ip[INET6_ADDRSTRLEN];
+    uint16_t client_port = 0;
+    int client_fd = 0;
+    if((client_fd = net_accept(server->fdmax, client_ip, &client_port)) < 0){
+        printf("Errore server_run: net_accept ritorna -1\n");
+        return;
+    }
+
+    User new_user;
+    new_user.connected = 0;
+    new_user.friend_count = 0;
+    strcpy(new_user.ip, client_ip);
+    new_user.tcp_fd = client_fd;
+    new_user.udp_port = htons(client_port);
+
+    server->users[server->client_count] = new_user;
+    server->client_count++;
+    FD_SET(client_fd, &server->master_fds); //serve?
+}
+
+void server_handle_client_msg(Server *server, int client_fd){
+    char msg[MSG_BUFF_MAXSIZE];
+    int r = net_recv_msg(client_fd, msg, MSG_BUFF_MAXSIZE);
+    if(r<0){
+        //gestione errore
+        return;
+    }
+
+    int type = get_type(msg);
+    switch(type){
+        case(MSG_REGIS):
+            break;
+        case(MSG_CONNE):
+            break;
+        case(MSG_FRIE_REQ):
+            break;
+        case(MSG_MESS_REQ):
+            break;
+        case(MSG_FLOO_REQ):
+            break;
+        case(MSG_LIST_REQ):
+            break;
+        case(MSG_CONSU):
+            break;
+        case(MSG_OKIRF):
+            break;
+        case(MSG_NOKRF):
+            break;
+        case(MSG_IQUIT):
+            break;
+
+        default:
+            printf("Errore server_handle_client_msg: tipo messaggio invalido/sconosciuto\n");
+            return;
+    }
+}

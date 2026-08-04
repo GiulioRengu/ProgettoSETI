@@ -20,6 +20,7 @@
 #define TYPE_LENGHT 5
 #define MSG_TERMINATOR "+++"
 #define MSG_LENGTH_MAX 200
+#define MSG_BUFF_MAXSIZE 300
 
 typedef enum{
     STREAM_FRIEND_REQ, //[0XX]
