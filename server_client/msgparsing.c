@@ -71,7 +71,7 @@ int get_type(char* buff){
     if (strncmp(type, "NOFRI", 5) == 0) return MSG_NOFRI;
     if (strncmp(type, "NOCON", 5) == 0) return MSG_NOCON;
 
-    return MSG_UNKNOWN;
+    return -1;
 }
 
 void get_id(char* buff, char* id){

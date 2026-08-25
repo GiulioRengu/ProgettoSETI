@@ -3,8 +3,9 @@
 
 int server_init(Server *server, uint16_t port)
 {
-    if(server==NULL || net_is_valid_port(port)!=-1) return -1;
-    
+    if(server==NULL || net_is_valid_port(port)==-1) return -1;
+    memset(server->users, 0, sizeof(server->users));
+    for(int i=0; i<MAX_USERS; i++) server->users[i].connected=-1;
     //creiamo il socket listener con il server
     server->tcp_fd=net_create_tcp_server(port);
     
@@ -108,3 +109,84 @@ void server_handle_client_msg(Server *server, int client_fd){
             return;
     }
 }
+
+User* get_user_by_id(Server *server, const char *id)
+{
+    if(server->client_count==0 || server!=NULL)
+    {
+        printf("Nessun utente registrato nel server o nessun server disponibile\n");
+        return NULL;
+    }
+    for(int i=0; i<server->client_count; i++)
+    {
+        if(server->users[i].id==id)
+        {
+            return &server->users[i];
+        }
+    }
+    printf("User %s non trovato", id);
+    return NULL;
+}
+
+User* get_user_by_fd(Server *server, int fd)
+{
+    if(server->client_count==0 || server!=NULL)
+    {
+        printf("Nessun utente registrato nel server o nessun server disponibile\n");
+        return NULL;
+    }
+    for(int i=0; i<server->client_count; i++)
+    {
+        if(server->users[i].tcp_fd==fd)
+        {
+            return &server->users[i];
+        }
+    }
+    printf("User %d non trovato\n", fd);
+    return NULL;
+}
+
+// Invia una notifica UDP [YXX] al client
+void server_send_udp_notification(Server *server, User *user, StreamType type)
+{
+    if(server==NULL || user==NULL)
+    {
+        printf("Server o user null\n");
+        return;
+    }
+    if(net_send_udp(user, type, user->stream_count)<0)
+    {
+        printf("Problema a mandare UDP notif a %s",user->id);
+    }
+}
+
+// Aggiunge un flusso alla lista dell'utente e manda notifica
+void server_add_stream(Server *server, User *user, Stream *new_stream)
+{
+    if(server==NULL || user==NULL || new_stream==NULL)
+    {
+        printf("Server o user null\n");
+        return;
+    }
+
+    new_stream->next=NULL;
+
+    if(user->streams==NULL) //first notif
+    {
+        user->streams=new_stream;
+    }
+    else
+    {
+        Stream *tmp=user->streams;
+        while(tmp->next!=NULL)
+        {
+            tmp=tmp->next;
+        }
+        tmp->next=new_stream;
+    }
+    user->stream_count++;
+    server_send_udp_notification(server, user, new_stream->type);
+}
+
+// Pulizia risorse server
+void server_cleanup(Server *server);

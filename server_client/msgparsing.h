@@ -38,8 +38,7 @@ typedef enum {
     MSG_FRIEN,          /* FRIEN id+++          */
     MSG_NOFRI,          /* NOFRI id+++          */
     MSG_NOCON,          /* NOCON+++             */
-    /* errore / non riconosciuto */
-    MSG_UNKNOWN
+
 } MsgType;
 
 /**
