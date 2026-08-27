@@ -189,4 +189,28 @@ void server_add_stream(Server *server, User *user, Stream *new_stream)
 }
 
 // Pulizia risorse server
-void server_cleanup(Server *server);
+void server_cleanup(Server *server)
+{
+    if(server==NULL) return;
+
+    if(server->tcp_fd>=0) close(server->tcp_fd);
+
+    for(int i=0; i<server->client_count; i++)
+    {
+        if(server->users[i].connected==0)
+        {
+            close(server->users[i].tcp_fd);
+        }
+        Stream *current=server->users[i].streams;
+        while(current!=NULL)
+        {
+            Stream *tmp=current;
+            current=current->next;
+            free(tmp);
+        }
+        server->users[i].streams=NULL;
+    }
+    server->client_count=0;
+    server->fdmax=0;
+    FD_ZERO(&server->master_fds);
+}

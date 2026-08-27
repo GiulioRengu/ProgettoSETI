@@ -29,4 +29,6 @@ void server_add_stream(Server *server, User *user, Stream *new_stream);
 // Pulizia risorse server
 void server_cleanup(Server *server);
 
+void handle_sigint(int sig);
+
 #endif
