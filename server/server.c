@@ -174,6 +174,25 @@ void server_add_stream(Server *server, User *user, Stream *new_stream)
     server_send_udp_notification(server, user, new_stream->type);
 }
 
+//da controllare
+void server_disconnect(Server *server, int fd){
+    for (int i = 0; i < server->client_count; i++){
+        if (server->users[i].tcp_fd == fd){
+            server->users[i].connected = -1;   
+            server->users[i].tcp_fd = -1;       
+
+            FD_CLR(fd, &server->master_fds);
+            close(fd);
+            return;
+        }
+    }
+
+    memset(server->pendingClients[fd], 0, INET6_ADDRSTRLEN);
+
+    FD_CLR(fd, &server->master_fds);
+    close(fd);
+}
+
 // Pulizia risorse server
 void server_cleanup(Server *server)
 {

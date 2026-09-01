@@ -26,6 +26,8 @@ void server_send_udp_notification(Server *server, User *user, StreamType type);
 // Aggiunge un flusso alla lista dell'utente e manda notifica
 void server_add_stream(Server *server, User *user, Stream *new_stream);
 
+void server_disconnect(Server *server, int fd);
+
 // Pulizia risorse server
 void server_cleanup(Server *server);
 
