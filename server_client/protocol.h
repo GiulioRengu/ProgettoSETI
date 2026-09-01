@@ -30,14 +30,14 @@ typedef enum{
     STREAM_FLOO,       //[4XX]
 } StreamType;
 
-typedef struct Stream{ //per le notifiche UDP
+typedef struct { //per le notifiche UDP
     StreamType type;
     char from_id[ID_LENGTH+1];
     char msg[MSG_LENGTH_MAX+1];
     struct Stream *next;
 }Stream;
 
-typedef struct User{
+typedef struct {
     char id[ID_LENGTH+1];
     uint16_t password;
     uint16_t udp_port;
@@ -53,6 +53,11 @@ typedef struct User{
     int stream_count;
 } User;
 
+// typedef struct {
+//     int fd;
+//     char ip[INET6_ADDRSTRLEN];
+// } pendingClient;
+
 typedef struct {
     User users[MAX_USERS];
     int client_count;
@@ -60,6 +65,8 @@ typedef struct {
 
     fd_set master_fds;
     int fdmax;
+
+    char pendingClients[FD_SETSIZE][INET6_ADDRSTRLEN]; //array contente l'ip dei clienti che non si sono ancora registrati
 } Server;
 
 #endif

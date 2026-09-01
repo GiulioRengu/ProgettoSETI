@@ -54,23 +54,20 @@ void server_accept_client(Server *server){
     }
 
     char client_ip[INET6_ADDRSTRLEN];
-    uint16_t client_port = 0;
+    uint16_t client_tcp_port = 0;
     int client_fd = 0;
-    if((client_fd = net_accept(server->fdmax, client_ip, &client_port)) < 0){
-        printf("Errore server_run: net_accept ritorna -1\n");
+    if((client_fd = net_accept(server->tcp_fd, client_ip, &client_tcp_port)) < 0){
+        printf("Errore server_accept_client: net_accept ritorna -1\n");
         return;
     }
 
-    User new_user;
-    new_user.connected = 0;
-    new_user.friend_count = 0;
-    strcpy(new_user.ip, client_ip);
-    new_user.tcp_fd = client_fd;
-    new_user.udp_port = htons(client_port);
+    FD_SET(client_fd, &server->master_fds);
+    if (client_fd > server->fdmax){
+        server->fdmax = client_fd;
+    }
 
-    server->users[server->client_count] = new_user;
-    server->client_count++;
-    FD_SET(client_fd, &server->master_fds); //serve?
+    strncpy(server->pendingClients[client_fd], client_ip, INET6_ADDRSTRLEN);
+
 }
 
 void server_handle_client_msg(Server *server, int client_fd){
@@ -83,26 +80,17 @@ void server_handle_client_msg(Server *server, int client_fd){
 
     int type = get_type(msg);
     switch(type){
-        case(MSG_REGIS):
-            break;
-        case(MSG_CONNE):
-            break;
-        case(MSG_FRIE_REQ):
-            break;
-        case(MSG_MESS_REQ):
-            break;
-        case(MSG_FLOO_REQ):
-            break;
-        case(MSG_LIST_REQ):
-            break;
-        case(MSG_CONSU):
-            break;
-        case(MSG_OKIRF):
-            break;
-        case(MSG_NOKRF):
-            break;
-        case(MSG_IQUIT):
-            break;
+
+        case MSG_REGIS:    handle_regis(server, client_fd, msg); break;
+        case MSG_CONNE:    handle_conne(server, client_fd, msg); break;
+        case MSG_FRIE_REQ: handle_frie(server, client_fd, msg); break;
+        case MSG_MESS_REQ: handle_mess(server, client_fd, msg); break;
+        case MSG_FLOO_REQ: handle_floo(server, client_fd, msg); break;
+        case MSG_LIST_REQ: handle_list(server, client_fd, msg); break;
+        case MSG_CONSU:    handle_consu(server, client_fd, msg); break;
+        case MSG_OKIRF:    handle_friend_reply(server, client_fd, msg, true); break;
+        case MSG_NOKRF:    handle_friend_reply(server, client_fd, msg, false); break;
+        case MSG_IQUIT:    handle_quit(server, client_fd, msg); break;
 
         default:
             printf("Errore server_handle_client_msg: tipo messaggio invalido/sconosciuto\n");
@@ -112,7 +100,7 @@ void server_handle_client_msg(Server *server, int client_fd){
 
 User* get_user_by_id(Server *server, const char *id)
 {
-    if(server->client_count==0 || server!=NULL)
+    if(server==NULL || server->client_count==0)
     {
         printf("Nessun utente registrato nel server o nessun server disponibile\n");
         return NULL;
@@ -130,12 +118,12 @@ User* get_user_by_id(Server *server, const char *id)
 
 User* get_user_by_fd(Server *server, int fd)
 {
-    if(server->client_count==0 || server!=NULL)
+    if(server==NULL || server->client_count==0)
     {
         printf("Nessun utente registrato nel server o nessun server disponibile\n");
         return NULL;
     }
-    for(int i=0; i<server->client_count; i++)
+    for(int i=0; i<MAX_USERS; i++)
     {
         if(server->users[i].tcp_fd==fd)
         {
