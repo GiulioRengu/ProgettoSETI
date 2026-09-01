@@ -39,7 +39,32 @@ void handle_regis(Server* server, int client_fd, char* msg){
         return;
     }
 
+    char client_ip[INET6_ADDRSTRLEN];
+    strncpy(client_ip, server->pendingClients[client_fd], INET6_ADDRSTRLEN);
+    User new_user;
+    memset(&new_user, 0, sizeof(User));
 
+    new_user.connected = 0;
+    strcpy(new_user.id, id);
+    strncpy(new_user.ip, client_ip, INET6_ADDRSTRLEN);
+    new_user.password = password;
+    new_user.udp_port = udp_port;
+    new_user.tcp_fd = client_fd;
+
+    int success = -1;
+    for(unsigned i = 0; i<MAX_USERS; i++){
+        if(server->users[i].id[0] == '\0'){
+            server->users[i] = new_user;
+            success = 0;
+            server->client_count++;
+            break;
+        }
+    }
+
+    if(success < 0) build_gobye(retmsg);
+    else build_welco(retmsg);
+
+    net_send_str(client_fd, retmsg);
 }
 
 void handle_conne(Server* server, int client_fd, char* msg);

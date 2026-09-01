@@ -48,11 +48,10 @@ void server_run(Server *server)
 }
 
 void server_accept_client(Server *server){
-    if(server->client_count >= MAX_USERS){
-        printf("Errore server_accept_client: server->client_count >= MAX_USERS\n");
-        return;
-    }
-
+    // if(server->client_count >= MAX_USERS){
+    //     printf("Errore server_accept_client: server->client_count >= MAX_USERS\n");
+    //     return;
+    // }
     char client_ip[INET6_ADDRSTRLEN];
     uint16_t client_tcp_port = 0;
     int client_fd = 0;
@@ -67,7 +66,6 @@ void server_accept_client(Server *server){
     }
 
     strncpy(server->pendingClients[client_fd], client_ip, INET6_ADDRSTRLEN);
-
 }
 
 void server_handle_client_msg(Server *server, int client_fd){
