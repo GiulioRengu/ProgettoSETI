@@ -16,6 +16,7 @@
 #include <ctype.h>
 
 #define MAX_USERS 100
+#define MAX_FLOWS 255
 #define ID_LENGTH 8
 #define TYPE_LENGHT 5
 #define MSG_TERMINATOR "+++"
@@ -30,14 +31,14 @@ typedef enum{
     STREAM_FLOO,       //[4XX]
 } StreamType;
 
-typedef struct { //per le notifiche UDP
+typedef struct Stream{ //per le notifiche UDP
     StreamType type;
     char from_id[ID_LENGTH+1];
     char msg[MSG_LENGTH_MAX+1];
     struct Stream *next;
 }Stream;
 
-typedef struct {
+typedef struct User{
     char id[ID_LENGTH+1];
     uint16_t password;
     uint16_t udp_port;
@@ -49,7 +50,7 @@ typedef struct {
     int friend_count;
     bool pending_frie;
 
-    struct Stream *streams;
+    struct Stream* streams;
     int stream_count;
 } User;
 
@@ -58,7 +59,7 @@ typedef struct {
 //     char ip[INET6_ADDRSTRLEN];
 // } pendingClient;
 
-typedef struct {
+typedef struct Server{
     User users[MAX_USERS];
     int client_count;
     int tcp_fd; //socket TCP listener

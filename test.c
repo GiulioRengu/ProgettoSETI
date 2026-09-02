@@ -8,13 +8,8 @@
  
 int main(){
 
-    char *msg="CONSU 12345678 1010 999";
-    // char buff[256];
-    char *type=malloc(sizeof(char)*16);
-    printf("%d\n", get_type(msg, type));
-    get_id(msg, type);
-    printf("%s\n", type);
-    get_port(msg, type, 15);
-    printf("%s\n", type);
-    printf("%d\n", get_type(msg, type));
+
+    char* msg =  "1010";
+    uint16_t password = (unsigned char)msg[0] | ((unsigned char)msg[1] << 8);
+    printf("%d", password);
 }

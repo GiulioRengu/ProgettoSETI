@@ -2,6 +2,7 @@
 #define SERVER_H
 
 #include "../server_client/protocol.h"
+#include "serverHandlers.h"
 #include <sys/select.h>
 
 // Inizializza il server mettendolo in ascolto su una porta TCP (inferiore a 9999)
@@ -21,7 +22,7 @@ User* get_user_by_id(Server *server, const char *id);
 User* get_user_by_fd(Server *server, int fd);
 
 // Invia una notifica UDP [YXX] al client
-void server_send_udp_notification(Server *server, User *user, StreamType type);
+int server_send_udp_notification(Server *server, User *user, StreamType type);
 
 // Aggiunge un flusso alla lista dell'utente e manda notifica
 void server_add_stream(Server *server, User *user, Stream *new_stream);

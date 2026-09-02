@@ -133,17 +133,20 @@ User* get_user_by_fd(Server *server, int fd)
 }
 
 // Invia una notifica UDP [YXX] al client
-void server_send_udp_notification(Server *server, User *user, StreamType type)
+int server_send_udp_notification(Server *server, User *user, StreamType type)
 {
     if(server==NULL || user==NULL)
     {
         printf("Server o user null\n");
-        return;
+        return -1;
     }
     if(net_send_udp(user, type, user->stream_count)<0)
     {
         printf("Problema a mandare UDP notif a %s",user->id);
+        return -1;
     }
+
+    return 0;
 }
 
 // Aggiunge un flusso alla lista dell'utente e manda notifica
@@ -188,7 +191,6 @@ void server_disconnect(Server *server, int fd){
     }
 
     memset(server->pendingClients[fd], 0, INET6_ADDRSTRLEN);
-
     FD_CLR(fd, &server->master_fds);
     close(fd);
 }
