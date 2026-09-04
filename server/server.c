@@ -149,34 +149,6 @@ int server_send_udp_notification(Server *server, User *user, StreamType type)
     return 0;
 }
 
-// Aggiunge un flusso alla lista dell'utente e manda notifica
-void server_add_stream(Server *server, User *user, Stream *new_stream)
-{
-    if(server==NULL || user==NULL || new_stream==NULL)
-    {
-        printf("Server o user null\n");
-        return;
-    }
-
-    new_stream->next=NULL;
-
-    if(user->streams==NULL) //first notif
-    {
-        user->streams=new_stream;
-    }
-    else
-    {
-        Stream *tmp=user->streams;
-        while(tmp->next!=NULL)
-        {
-            tmp=tmp->next;
-        }
-        tmp->next=new_stream;
-    }
-    user->stream_count++;
-    server_send_udp_notification(server, user, new_stream->type);
-}
-
 //da controllare
 void server_disconnect(Server *server, int fd){
     for (int i = 0; i < server->client_count; i++){

@@ -11,6 +11,8 @@
 // client_fd serve sempre, anche prima di aver risolto lo User (es. REGIS,
 // dove lo User non esiste ancora).
 
+int are_friends(const User* first, const User* second);
+
 void handle_regis(Server* server, int client_fd, char* msg);
 
 void handle_conne(Server* server, int client_fd, char* msg);

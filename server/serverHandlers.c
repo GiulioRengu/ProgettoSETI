@@ -1,6 +1,21 @@
 #include "serverHandlers.h"
 #include "streamHandlers.h"
 
+int are_friends(const User* first, const User* second){
+    int friends_found = 0, i = 0, found = -1;
+    while(friends_found < first->friend_count && i < MAX_USERS){
+        if (first->friends[i][0] != '\0'){
+            friends_found++;
+            if (strcmp(first->friends[i], second->id) == 0){
+                found = 0;
+                break;
+            }
+        }
+        i++;
+    }
+    return found;
+}
+
 void handle_regis(Server* server, int client_fd, char* msg){ //serve fare disconnect quando fallisce?
     if(server == NULL || client_fd < 0 || msg == NULL) return;
 
@@ -151,18 +166,11 @@ void handle_frie(Server* server, int client_fd, char* msg){
         return;
     }
 
-    int friends_found = 0, i = 0;
-    while(friends_found < src->friend_count){
-        if (src->friends[i][0] != '\0'){
-            friends_found++;
-            if (strcmp(src->friends[i], dest->id) == 0){
-                printf("Errore handle_frie: sei gia amico di %s!\n", dest->id);
-                build_frie_ko(retmsg);
-                if(net_send_str(client_fd, retmsg) < 0) server_disconnect(server, client_fd);
-                return;
-            }
-        }
-        i++;
+    if (are_friends(src, dest) == 0){
+        printf("Errore handle_frie: sei gia amico di %s!\n", dest->id);
+        build_frie_ko(retmsg);
+        if(net_send_str(client_fd, retmsg) < 0) server_disconnect(server, client_fd);
+        return;
     }
 
     Stream* aux = dest->streams;
@@ -185,7 +193,7 @@ void handle_frie(Server* server, int client_fd, char* msg){
 
     if(stream_add(dest, src->id, NULL, STREAM_FRIEND_REQ)<0)
     {
-        printf("Errore invio amicizia da %s a %s", src, dest);
+        printf("Errore invio amicizia da %s a %s", src->id, dest->id);
         build_frie_ko(retmsg);
         if(net_send_str(client_fd, retmsg) < 0) server_disconnect(server, client_fd);
         return;
@@ -206,7 +214,7 @@ void handle_frie(Server* server, int client_fd, char* msg){
     // }
     // dest->stream_count++;
 
-    if(server_send_udp_notification(server, dest, STREAM_FRIEND_REQ) < 0){
+    if(server_send_udp_notification(server, dest, STREAM_FRIEND_REQ) < 0){ //serve????? non credo...
         printf("Errore handle_frie: invio notifica udp a %s non riuscito\n", dest->id);
     }
 
@@ -229,8 +237,15 @@ void handle_mess(Server* server, int client_fd, char* msg){
     char dest_id[ID_LENGTH+1];
     get_id(msg, dest_id);
     User* dest = get_user_by_id(server, dest_id);
-    get_msg(msg, to_send, 9);
 
+    if (src == NULL || dest == NULL){
+        printf("Errore handle_mess: utente/i non esistenti\n");
+        build_mess_ko(retmsg);
+        if(net_send_str(client_fd, retmsg) < 0) server_disconnect(server, client_fd);
+        return;
+    }
+
+    get_msg(msg, to_send, 9);
     if (net_is_valid_msg(to_send) < 0){
         build_mess_ko(retmsg);
         if (net_send_str(client_fd, retmsg) < 0){
@@ -241,13 +256,7 @@ void handle_mess(Server* server, int client_fd, char* msg){
         return;
     }
 
-    if (src == NULL || dest == NULL){
-        printf("Errore handle_mess: utente/i non esistenti\n");
-        build_mess_ko(retmsg);
-        if(net_send_str(client_fd, retmsg) < 0) server_disconnect(server, client_fd);
-        return;
-    }
-
+    
     if (strcmp(src->id, dest->id) == 0){
         printf("Errore handle_mess: non puoi inviare un messaggio a te stesso!\n");
         build_mess_ko(retmsg);
@@ -255,29 +264,25 @@ void handle_mess(Server* server, int client_fd, char* msg){
         return;
     }
 
-    //da fare una funzione che controlla se due utenti sono gia amici
-    int friends_found = 0, i = 0, found = -1;
-    while(friends_found < src->friend_count){
-        if (src->friends[i][0] != '\0'){
-            friends_found++;
-            if (strcmp(src->friends[i], dest->id) == 0){
-                found = 0;
-                break;
-            }
-        }
-        i++;
+    if (are_friends(src, dest) < 0){
+        printf("Errore handle_mess: non sei amico di %s!\n", dest->id);
+        build_mess_ko(retmsg);
+        if(net_send_str(client_fd, retmsg) < 0) server_disconnect(server, client_fd);
+        return;
     }
 
-    if (found < 0){
-        printf("Errore handle_mess: non sei amico di %s!\n", src->id);
+    if (stream_add(dest, src->id, to_send, STREAM_MSG) < 0){
+        printf("Errore handle_mess: lista stream di %s piena\n", dest->id);
         build_mess_ko(retmsg);
         if(net_send_str(client_fd, retmsg) < 0) server_disconnect(server, client_fd);
         return;
     }
 
     server_send_udp_notification(server, dest, STREAM_MSG);
-
-    //inviare stream
+    build_mess_ok(retmsg);
+    if(net_send_str(client_fd, retmsg) < 0) server_disconnect(server, client_fd);
+    printf("Messaggio da parte di %s inviato a %s\n", src->id, dest->id);
+    return;
 }
 
 void handle_floo(Server* server, int client_fd, char* msg){return;}
