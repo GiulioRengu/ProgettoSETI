@@ -9,7 +9,8 @@
 int main(){
 
 
-    char* msg =  "1010";
-    uint16_t password = (unsigned char)msg[0] | ((unsigned char)msg[1] << 8);
-    printf("%d", password);
+    char* msg = "+++al+n++c+a++em+f+opa";
+    char buff[32];
+    get_msg(msg, buff, 0);
+    printf("%s\n", buff);
 }

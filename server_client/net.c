@@ -275,6 +275,7 @@ int net_send_udp(/*int udp_fd,*/ const User *target, StreamType type, int stream
     ssize_t sent = sendto(fd, tosend, 3, 0, (struct sockaddr*) &dest_addr, ip_len);
     if (sent != 3){
         printf("Errore net_send_udp | Reason: %s", strerror(errno));
+        close(fd);
         return -1;
     }
     close(fd);
