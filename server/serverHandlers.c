@@ -220,11 +220,92 @@ void handle_frie(Server* server, int client_fd, char* msg){
     printf("Richiesta di amicizia da %s inviata correttamente a %s\n", src->id, dest->id);
 }
 
-void handle_mess(Server* server, int client_fd, char* msg){return;}
+void handle_mess(Server* server, int client_fd, char* msg){
+    if (server == NULL || client_fd < 0 || msg == NULL) return;
+    char retmsg[9]; 
+    char to_send[MSG_LENGTH_MAX];
+
+    User* src = get_user_by_fd(server, client_fd);
+    char dest_id[ID_LENGTH+1];
+    get_id(msg, dest_id);
+    User* dest = get_user_by_id(server, dest_id);
+    get_msg(msg, to_send, 9);
+
+    if (net_is_valid_msg(to_send) < 0){
+        build_mess_ko(retmsg);
+        if (net_send_str(client_fd, retmsg) < 0){
+            printf("Errore handle_mess: errore durante invio MESS<\n");
+            server_disconnect(server, client_fd);
+            return;
+        }
+        return;
+    }
+
+    if (src == NULL || dest == NULL){
+        printf("Errore handle_mess: utente/i non esistenti\n");
+        build_mess_ko(retmsg);
+        if(net_send_str(client_fd, retmsg) < 0) server_disconnect(server, client_fd);
+        return;
+    }
+
+    if (strcmp(src->id, dest->id) == 0){
+        printf("Errore handle_mess: non puoi inviare un messaggio a te stesso!\n");
+        build_mess_ko(retmsg);
+        if(net_send_str(client_fd, retmsg) < 0) server_disconnect(server, client_fd);
+        return;
+    }
+
+    //da fare una funzione che controlla se due utenti sono gia amici
+    int friends_found = 0, i = 0, found = -1;
+    while(friends_found < src->friend_count){
+        if (src->friends[i][0] != '\0'){
+            friends_found++;
+            if (strcmp(src->friends[i], dest->id) == 0){
+                found = 0;
+                break;
+            }
+        }
+        i++;
+    }
+
+    if (found < 0){
+        printf("Errore handle_mess: non sei amico di %s!\n", src->id);
+        build_mess_ko(retmsg);
+        if(net_send_str(client_fd, retmsg) < 0) server_disconnect(server, client_fd);
+        return;
+    }
+
+    server_send_udp_notification(server, dest, STREAM_MSG);
+
+    //inviare stream
+}
 
 void handle_floo(Server* server, int client_fd, char* msg){return;}
 
-void handle_list(Server* server, int client_fd, char* msg){return;}
+void handle_list(Server* server, int client_fd, char* msg){
+    char u_id[24];
+    User* u = get_user_by_fd(server, client_fd);
+    if (u == NULL || server == NULL) return;
+
+    build_rlist(u_id, server->client_count);
+    if (net_send_str(client_fd, u_id) < 0){
+        printf("Errore handle_list: errore invio RLIST\n"); 
+        server_disconnect(server, client_fd);
+        return;
+    }
+
+    for (unsigned i = 0; i<server->client_count; i++){
+        build_linum(u_id, server->users[i].id);
+        if (net_send_str(client_fd, u_id) < 0){
+            printf("Errore handle_list: errore invio LINUM, inviati %d\n", i);
+            server_disconnect(server, client_fd);
+            return;
+        }
+    }
+
+    printf("RLIST eseguito correttamente: inviata lista di %d utenti a %s\n", server->client_count, u->id);
+    return;
+}
 
 void handle_consu(Server* server, int client_fd, char* msg){
     return;
@@ -232,4 +313,12 @@ void handle_consu(Server* server, int client_fd, char* msg){
 
 void handle_friend_reply(Server* server, int client_fd, char* msg, bool accepted){return;}
 
-void handle_quit(Server* server, int client_fd, char* msg){return;}
+void handle_quit(Server* server, int client_fd, char* msg){
+    User* u = get_user_by_fd(server, client_fd);
+    if (u == NULL || server == NULL) return;
+
+    char retmsg[9];
+    build_gobye(retmsg);
+    net_send_str(client_fd, retmsg);
+    server_disconnect(server, client_fd);
+}
