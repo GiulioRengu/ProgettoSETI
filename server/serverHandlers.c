@@ -1,4 +1,5 @@
 #include "serverHandlers.h"
+#include "streamHandlers.h"
 
 void handle_regis(Server* server, int client_fd, char* msg){ //serve fare disconnect quando fallisce?
     if(server == NULL || client_fd < 0 || msg == NULL) return;
@@ -52,7 +53,7 @@ void handle_regis(Server* server, int client_fd, char* msg){ //serve fare discon
     memset(&new_user, 0, sizeof(User));
 
     new_user.connected = 0;
-    strcpy(new_user.id, id);
+    strncpy(new_user.id, id, 9);
     strncpy(new_user.ip, client_ip, INET6_ADDRSTRLEN);
     new_user.password = password;
     new_user.udp_port = udp_port;
@@ -124,7 +125,7 @@ void handle_conne(Server* server, int client_fd, char* msg){
         server_disconnect(server, client_fd);
         return;
     }
-    
+
 }
 
 void handle_frie(Server* server, int client_fd, char* msg){
@@ -175,27 +176,35 @@ void handle_frie(Server* server, int client_fd, char* msg){
         aux = aux->next;
     }
 
-    if (dest->stream_count >= MAX_FLOWS){
-        printf("Errore handle_frie: %s ha troppe richieste\n", dest->id);
+    // if (dest->stream_count >= MAX_STREAMS){
+    //     printf("Errore handle_frie: %s ha troppe richieste\n", dest->id);
+    //     build_frie_ko(retmsg);
+    //     if(net_send_str(client_fd, retmsg) < 0) server_disconnect(server, client_fd);
+    //     return;
+    // }
+
+    if(stream_add(dest, src->id, NULL, STREAM_FRIEND_REQ)<0)
+    {
+        printf("Errore invio amicizia da %s a %s", src, dest);
         build_frie_ko(retmsg);
         if(net_send_str(client_fd, retmsg) < 0) server_disconnect(server, client_fd);
         return;
     }
 
-    Stream* new_stream = malloc(sizeof(Stream));
-    new_stream->type = STREAM_FRIEND_REQ;
-    strncpy(new_stream->from_id, src->id, ID_LENGTH+1);
-    new_stream->next = NULL;
+    // Stream* new_stream = malloc(sizeof(Stream));
+    // new_stream->type = STREAM_FRIEND_REQ;
+    // strncpy(new_stream->from_id, src->id, ID_LENGTH+1);
+    // new_stream->next = NULL;
 
-    if (dest->streams == NULL){
-        dest->streams = new_stream;
-    } 
-    else {
-        aux = dest->streams;
-        while (aux->next != NULL) aux = aux->next;
-        aux->next = new_stream;
-    }
-    dest->stream_count++;
+    // if (dest->streams == NULL){
+    //     dest->streams = new_stream;
+    // } 
+    // else {
+    //     aux = dest->streams;
+    //     while (aux->next != NULL) aux = aux->next;
+    //     aux->next = new_stream;
+    // }
+    // dest->stream_count++;
 
     if(server_send_udp_notification(server, dest, STREAM_FRIEND_REQ) < 0){
         printf("Errore handle_frie: invio notifica udp a %s non riuscito\n", dest->id);
@@ -217,7 +226,9 @@ void handle_floo(Server* server, int client_fd, char* msg){return;}
 
 void handle_list(Server* server, int client_fd, char* msg){return;}
 
-void handle_consu(Server* server, int client_fd, char* msg){return;}
+void handle_consu(Server* server, int client_fd, char* msg){
+    return;
+}
 
 void handle_friend_reply(Server* server, int client_fd, char* msg, bool accepted){return;}
 

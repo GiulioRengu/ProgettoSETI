@@ -16,7 +16,7 @@
 #include <ctype.h>
 
 #define MAX_USERS 100
-#define MAX_FLOWS 255
+#define MAX_STREAMS 255
 #define ID_LENGTH 8
 #define TYPE_LENGHT 5
 #define MSG_TERMINATOR "+++"
