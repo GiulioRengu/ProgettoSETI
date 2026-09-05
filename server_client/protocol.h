@@ -48,9 +48,13 @@ typedef struct User{
     
     char friends[MAX_USERS][ID_LENGTH+1];
     int friend_count;
+    
     bool pending_frie;
+    char pending_frie_id[ID_LENGTH+1];
 
     struct Stream* streams;
+    //struct Stream *pending_stream;
+    //bool pending_stream
     int stream_count;
 } User;
 

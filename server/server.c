@@ -84,11 +84,11 @@ void server_handle_client_msg(Server *server, int client_fd){
         case MSG_FRIE_REQ: handle_frie(server, client_fd, msg); break;
         case MSG_MESS_REQ: handle_mess(server, client_fd, msg); break;
         case MSG_FLOO_REQ: handle_floo(server, client_fd, msg); break;
-        case MSG_LIST_REQ: handle_list(server, client_fd, msg); break;
-        case MSG_CONSU:    handle_consu(server, client_fd, msg); break;
+        case MSG_LIST_REQ: handle_list(server, client_fd); break;
+        case MSG_CONSU:    handle_consu(server, client_fd); break;
         case MSG_OKIRF:    handle_friend_reply(server, client_fd, msg, true); break;
         case MSG_NOKRF:    handle_friend_reply(server, client_fd, msg, false); break;
-        case MSG_IQUIT:    handle_quit(server, client_fd, msg); break;
+        case MSG_IQUIT:    handle_quit(server, client_fd); break;
 
         default:
             printf("Errore server_handle_client_msg: tipo messaggio invalido/sconosciuto\n");

@@ -19,11 +19,8 @@ int stream_add(User *user, const char *from_id, const char *msg, StreamType type
  * Removes the oldest Stream in the streams linked list
  * Fails when list is empty
  * 
- * @return 0 success,
- * @return 1 empty list
- * @return -1 failure.
  */
-int stream_remove(User *user);
+Stream *stream_remove(User *user);
 
 /**
  * self explanatory

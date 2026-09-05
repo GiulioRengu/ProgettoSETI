@@ -287,7 +287,7 @@ void handle_mess(Server* server, int client_fd, char* msg){
 
 void handle_floo(Server* server, int client_fd, char* msg){return;}
 
-void handle_list(Server* server, int client_fd, char* msg){
+void handle_list(Server* server, int client_fd){
     char u_id[24];
     User* u = get_user_by_fd(server, client_fd);
     if (u == NULL || server == NULL) return;
@@ -312,13 +312,107 @@ void handle_list(Server* server, int client_fd, char* msg){
     return;
 }
 
-void handle_consu(Server* server, int client_fd, char* msg){
+void handle_consu(Server* server, int client_fd){
+    /**
+     * =======================================================================
+     *                               DA FINIRE
+     * =======================================================================
+     */
+    if(server==NULL || client_fd<0)
+    {
+        return;
+    }
+
+    User*user;
+    if((user=get_user_by_fd(server, client_fd))==NULL)
+    {
+        printf("Errore CONSU: Utente non trovato\n");
+        return;
+    }
+
+    if(user->streams==NULL)
+    {
+        printf("Lista stream vuota\n");
+        return;
+    }
+
+    Stream *current_stream=stream_remove(user);
+    if(current_stream==NULL)
+    {
+        printf("Errore stream_remove\n");
+        return;
+    }
+
+
+    char retmsg[MSG_BUFF_MAXSIZE];
+    switch (current_stream->type)
+    {
+        case STREAM_FRIEND_REQ:
+            build_eirf(retmsg, current_stream->from_id);
+            if(net_send_str(client_fd, retmsg) < 0) 
+            {
+                printf("Errore invio EIRF\n");
+                goto consu_fail;
+            }
+            user->pending_frie=true;
+            strncpy(user->pending_frie_id, current_stream->from_id, ID_LENGTH+1);
+            user->pending_frie_id[ID_LENGTH] = '\0';
+            break;
+
+        case STREAM_FRIEND_ACC:
+            build_frien(retmsg, current_stream->from_id);
+            if(net_send_str(client_fd, retmsg) < 0) 
+            {
+                printf("Errore invio FRIEN\n");
+                goto consu_fail;
+            }
+            break;
+
+        case STREAM_FRIEND_REJ:
+            build_nofri(retmsg, current_stream->from_id);
+            if(net_send_str(client_fd, retmsg) < 0) 
+            {
+                printf("Errore invio NOFRI\n");
+                goto consu_fail;
+            }
+            break;
+
+        case STREAM_MSG:
+            build_ssem(retmsg, current_stream->from_id, current_stream->msg);
+            if(net_send_str(client_fd, retmsg) < 0) 
+            {
+                printf("Errore invio SSEM\n");
+                goto consu_fail;
+            }
+            break;
+
+        case STREAM_FLOO:
+            build_oolf(retmsg, current_stream->from_id, current_stream->msg);
+            if(net_send_str(client_fd, retmsg) < 0) 
+            {
+                printf("Errore invio OOLF\n");
+                goto consu_fail;
+            }
+            break;
+        default:
+        printf("Errore CONSU: flusso sconosciuto\n");
+        free(current_stream);
+        return;
+    }
+
+    free(current_stream);
+    printf("CONSU SUCCESS\n");
     return;
+
+    consu_fail:
+        server_disconnect(server, client_fd);
+        free(current_stream);
+        return;
 }
 
 void handle_friend_reply(Server* server, int client_fd, char* msg, bool accepted){return;}
 
-void handle_quit(Server* server, int client_fd, char* msg){
+void handle_quit(Server* server, int client_fd){
     User* u = get_user_by_fd(server, client_fd);
     if (u == NULL || server == NULL) return;
 

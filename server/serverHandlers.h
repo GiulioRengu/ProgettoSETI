@@ -23,12 +23,12 @@ void handle_mess(Server* server, int client_fd, char* msg);
 
 void handle_floo(Server* server, int client_fd, char* msg);
 
-void handle_list(Server* server, int client_fd, char* msg);
+void handle_list(Server* server, int client_fd);
 
-void handle_consu(Server* server, int client_fd, char* msg);
+void handle_consu(Server* server, int client_fd);
 
 void handle_friend_reply(Server* server, int client_fd, char* msg, bool accepted);
 
-void handle_quit(Server* server, int client_fd, char* msg);
+void handle_quit(Server* server, int client_fd);
 
 #endif
