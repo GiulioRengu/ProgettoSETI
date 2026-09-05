@@ -9,8 +9,9 @@
 int main(){
 
 
-    char* msg = "+++al+n++c+a++em+f+opa";
+    char* msg = "messs unoduetr abcdef";
     char buff[32];
-    get_msg(msg, buff, 0);
+        get_id(msg, buff);
+    get_msg(msg, buff, 15);
     printf("%s\n", buff);
 }
