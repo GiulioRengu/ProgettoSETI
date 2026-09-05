@@ -245,7 +245,7 @@ void handle_mess(Server* server, int client_fd, char* msg){
         return;
     }
 
-    get_msg(msg, to_send, 9);
+    get_msg(msg, to_send, 15);
     if (net_is_valid_msg(to_send) < 0){
         build_mess_ko(retmsg);
         if (net_send_str(client_fd, retmsg) < 0){
