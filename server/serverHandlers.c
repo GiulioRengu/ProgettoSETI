@@ -285,7 +285,7 @@ void handle_mess(Server* server, int client_fd, char* msg){
     return;
 }
 
-void handle_floo(Server* server, int client_fd, char* msg){return;}
+void handle_floo(Server* server, int client_fd, char* msg);
 
 void handle_list(Server* server, int client_fd){
     char u_id[24];
@@ -313,11 +313,6 @@ void handle_list(Server* server, int client_fd){
 }
 
 void handle_consu(Server* server, int client_fd){
-    /**
-     * =======================================================================
-     *                               DA FINIRE
-     * =======================================================================
-     */
     if(server==NULL || client_fd<0)
     {
         return;
@@ -330,13 +325,20 @@ void handle_consu(Server* server, int client_fd){
         return;
     }
 
-    if(user->streams==NULL)
+    if(user->streams==NULL && !user->has_pending_stream)
     {
         printf("Lista stream vuota\n");
         return;
     }
 
-    Stream *current_stream=stream_remove(user);
+    Stream *current_stream;
+    if (!user->has_pending_stream){
+        current_stream=stream_remove(user);
+        user->pending_stream = current_stream;
+        user->has_pending_stream = true;
+    }
+    else current_stream = user->pending_stream;
+
     if(current_stream==NULL)
     {
         printf("Errore stream_remove\n");
@@ -354,7 +356,7 @@ void handle_consu(Server* server, int client_fd){
                 printf("Errore invio EIRF\n");
                 goto consu_fail;
             }
-            user->pending_frie=true;
+            user->pending_frie_req=true;
             strncpy(user->pending_frie_id, current_stream->from_id, ID_LENGTH+1);
             user->pending_frie_id[ID_LENGTH] = '\0';
             break;
@@ -395,22 +397,89 @@ void handle_consu(Server* server, int client_fd){
             }
             break;
         default:
-        printf("Errore CONSU: flusso sconosciuto\n");
-        free(current_stream);
-        return;
+            printf("Errore CONSU: flusso sconosciuto\n");
+            free(current_stream);
+            user->pending_stream = NULL;
+            user->has_pending_stream = false;
+            return;
     }
 
     free(current_stream);
     printf("CONSU SUCCESS\n");
+    user->has_pending_stream = false;
+    user->pending_stream = NULL;
     return;
 
     consu_fail:
         server_disconnect(server, client_fd);
-        free(current_stream);
+        // free(current_stream);
+        // user->pending_stream = NULL;
+        // user->has_pending_stream = false;
         return;
 }
 
-void handle_friend_reply(Server* server, int client_fd, char* msg, bool accepted){return;}
+void handle_friend_reply(Server* server, int client_fd, char* msg, const bool accepted){
+    if (server == NULL || client_fd < 0) return;
+
+    User* target = get_user_by_fd(server, client_fd);
+    if (target == NULL){
+        printf("Errore handle_friend_reply: Utente destinatario non trovato\n");
+        return;
+    }
+    //controllare se sono gia amici?
+
+    if (!target->pending_frie_req || target->pending_frie_id[0] == '\0'){
+        printf("Errore handle_friend_reply: %s non ha richieste da accettare\n", target->id);
+        return;
+    }
+
+    User* requester = get_user_by_id(server, target->pending_frie_id);
+    if (requester == NULL){
+        printf("Errore handle_friend_reply: Utente richiedente non trovato\n");
+        return;
+    }
+
+    char retmsg[9];
+    build_ackrf(retmsg);
+    int r = stream_add(requester, target->id, NULL, (accepted ? STREAM_FRIEND_ACC : STREAM_FRIEND_REJ));
+    if (r < 0){
+        printf("Errore handle_friend_reply: aggiunta stream a %s non riuscito\n", requester->id);
+        return;  
+    }
+
+    if (accepted){
+        if (target->friend_count >= MAX_USERS || requester->friend_count >= MAX_USERS){
+        printf("Errore handle_friend_reply: uno dei due utenti ha la lista amici piena\n");
+        return;
+        }
+
+        int i = 0;
+        while(i < MAX_USERS && target->friends[i][0] != '\0') i++;  
+        strncpy(target->friends[i], requester->id, ID_LENGTH);
+        target->friends[i][ID_LENGTH] = '\0';
+        target->friend_count++;
+
+        i = 0;
+        while(i < MAX_USERS && requester->friends[i][0] != '\0') i++;  
+        strncpy(requester->friends[i], target->id, ID_LENGTH);
+        requester->friends[i][ID_LENGTH] = '\0';
+        requester->friend_count++;
+
+        server_send_udp_notification(server, requester, STREAM_FRIEND_ACC);
+    }
+    else server_send_udp_notification(server, requester, STREAM_FRIEND_REJ);
+
+    target->pending_frie_req = false;
+    target->pending_frie_id[0] = '\0';
+    target->has_pending_stream = false;
+
+    if (net_send_str(client_fd, retmsg) < 0){
+        printf("Errore handle_friend_reply: invio ACKRF a %s non riuscito\n", target->id);
+        server_disconnect(server, client_fd);
+        return;
+    }
+
+}
 
 void handle_quit(Server* server, int client_fd){
     User* u = get_user_by_fd(server, client_fd);

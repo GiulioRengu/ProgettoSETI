@@ -27,7 +27,7 @@ void handle_list(Server* server, int client_fd);
 
 void handle_consu(Server* server, int client_fd);
 
-void handle_friend_reply(Server* server, int client_fd, char* msg, bool accepted);
+void handle_friend_reply(Server* server, int client_fd, char* msg, const bool accepted); //msg 
 
 void handle_quit(Server* server, int client_fd);
 
