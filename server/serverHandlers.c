@@ -285,7 +285,38 @@ void handle_mess(Server* server, int client_fd, char* msg){
     return;
 }
 
-void handle_floo(Server* server, int client_fd, char* msg);
+void handle_floo(Server* server, int client_fd, char* msg)
+{
+    if(server==NULL || client_fd<0 || msg==NULL)
+    {
+        return;
+    }
+
+    char retmsg[9];
+    char to_send[MSG_BUFF_MAXSIZE+1];
+
+    User *sender=get_user_by_fd(server, client_fd);
+    if(sender==NULL)return;
+
+    get_msg(to_send, msg, 6); //[FLOO? ];
+
+    if(net_is_valid_msg(to_send)<0)
+    {
+        build_floo_ko(retmsg);
+        printf("Errore Flood: msg non valido\n");
+        if(net_send_str(client_fd, retmsg) < 0) server_disconnect(server, client_fd);
+        return;
+    }
+
+    printf("Inizio FLOO");
+    
+
+    build_floo_ok(retmsg);
+    if(net_send_str(client_fd, retmsg) < 0) server_disconnect(server, client_fd);
+    printf("Messaggio FLOO partito da %s\n", sender->id);
+    return;
+
+}
 
 void handle_list(Server* server, int client_fd){
     char u_id[24];

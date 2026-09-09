@@ -293,16 +293,26 @@ int net_is_valid_id(char *msg){
     return 0;
 }
 
+/**
+ * @return 0 ok, -1 non ok
+ */
 int net_is_valid_port(uint16_t port){
     return (port>0 && port<9999) ? 0 : -1;
 }
 
+/**
+ * @return 0 va bene, 1 non va bene
+ */
 int net_is_valid_password(int pwd){
     return (pwd>0 && pwd<65536) ? 0 : -1;
 }
 
+/**
+ * @return -1 se troppo lungo, 0 ha già il terminatore, 0 va bene
+ * 
+ */
 int net_is_valid_msg(char *msg){
     if (strlen(msg) > MSG_LENGTH_MAX) return -1;
 
-    return (strstr(msg, "+++") != NULL) ? -1 : 0; //se msg ha +++ ritorna -1
+    return (strstr(msg, "+++") != NULL) ? 0 : 1; //se msg ha +++ ritorna -1
 }
