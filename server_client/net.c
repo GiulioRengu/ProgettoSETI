@@ -230,7 +230,7 @@ int net_send_str(int fd, const char *buf)
 }
 
 /* ═══════════════════════════════════════════════════════════
- * INVIO UDP (notifiche server → client)
+ * INVIO UDP (notifiche server -> client)
  * ═══════════════════════════════════════════════════════════ */
 
 int net_send_udp(/*int udp_fd,*/ const User *target, StreamType type, int stream_count){ //forse da togliere udp_fd
@@ -287,32 +287,41 @@ int net_send_udp(/*int udp_fd,*/ const User *target, StreamType type, int stream
  * CONTROLLI
  * ═══════════════════════════════════════════════════════════ */
 
+/**
+ * @retval 0 va bene
+ * @retval -1 id troppo lungo (max 8 char)
+ * @retval 1 id contiene caratteri non alfanumerici
+ */
 int net_is_valid_id(char *msg){
     if (strlen(msg) != 8) return -1;
-    for(unsigned i = 0; i<8; i++) if (!isalnum(msg[i])) return -1;
+    for(unsigned i = 0; i<8; i++) if (!isalnum(msg[i])) return 1;
     return 0;
 }
 
 /**
- * @return 0 ok, -1 non ok
+ * @retval 0 va bene
+ * @retval -1 non va bene
  */
 int net_is_valid_port(uint16_t port){
     return (port>0 && port<9999) ? 0 : -1;
 }
 
 /**
- * @return 0 va bene, 1 non va bene
+ * @retval 0 va bene
+ * @retval 1 non va bene
  */
 int net_is_valid_password(int pwd){
     return (pwd>0 && pwd<65536) ? 0 : -1;
 }
 
 /**
- * @return -1 se troppo lungo, 0 ha già il terminatore, 0 va bene
+ * @retval -1 se troppo lungo
+ * @retval 0 ha già il terminatore
+ * @retval 1 va bene
  * 
  */
 int net_is_valid_msg(char *msg){
     if (strlen(msg) > MSG_LENGTH_MAX) return -1;
 
-    return (strstr(msg, "+++") != NULL) ? 0 : 1; //se msg ha +++ ritorna -1
+    return (strstr(msg, "+++") != NULL) ? 1 : 0; //se msg ha +++ ritorna -1
 }

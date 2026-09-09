@@ -5,12 +5,11 @@
 #include "../server_client/msgparsing.h"
 #include "../server_client/net.h"
 #include "server.h"
-
-// Ogni handler riceve il messaggio già letto da net_recv_msg (dispatch fatto
-// in server_handle_client_msg con uno switch su get_type(buf, ...)).
-// client_fd serve sempre, anche prima di aver risolto lo User (es. REGIS,
-// dove lo User non esiste ancora).
-
+/*
+ * Utility function, checks whether first and second are friends.
+ * @retval 0 if friends 
+ * @retval -1 if not friends
+ */
 int are_friends(const User* first, const User* second);
 
 void handle_regis(Server* server, int client_fd, char* msg);

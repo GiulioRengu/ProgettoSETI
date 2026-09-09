@@ -6,14 +6,14 @@
 // #include "../server_client/net.h"
 
 /*
- * Funzione di utilità per trovare l'indice numerico di un utente 
- * nell'array server->users (utile per l'array dei "visitati").
+ * Utility function, returns idx of id in server->users
+ * @retval -1 if user.id is not found. 
+ * @retval index of user in server->users else
  */
 int get_user_index(Server* server, const char* id);
 
 /*
- * Esegue la visita in ampiezza (BFS) del grafo delle amicizie 
- * per recapitare il messaggio 'mess' a tutti gli utenti connessi indirettamente.
+ * Execution of flood using BFS through sender->friends.
  */
 void execute_flood_bfs(Server* server, User* sender, const char* mess);
 

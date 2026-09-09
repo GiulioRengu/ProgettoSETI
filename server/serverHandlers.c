@@ -16,7 +16,7 @@ int are_friends(const User* first, const User* second){
     }
     return found;
 }
-//ciao
+
 void handle_regis(Server* server, int client_fd, char* msg){ //serve fare disconnect quando fallisce?
     if(server == NULL || client_fd < 0 || msg == NULL) return;
 
