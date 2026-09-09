@@ -1,5 +1,6 @@
 #include "serverHandlers.h"
 #include "streamHandlers.h"
+#include "floodHandler.h"
 
 int are_friends(const User* first, const User* second){
     int friends_found = 0, i = 0, found = -1;
@@ -309,7 +310,7 @@ void handle_floo(Server* server, int client_fd, char* msg)
     }
 
     printf("Inizio FLOO");
-    
+    execute_flood_bfs(server, sender, to_send);
 
     build_floo_ok(retmsg);
     if(net_send_str(client_fd, retmsg) < 0) server_disconnect(server, client_fd);
