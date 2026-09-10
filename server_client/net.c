@@ -180,15 +180,16 @@ int net_recv_msg(int fd, char *buf, int bufsize){
     while(received < bufsize-1){
         r = recv(fd, buf+received, 1, 0); //scrivo in posizione buf[received]
         if (r<0){
+            // if(errno==EINTR) continue;
             printf("Errore net_recv_msg: recv  Reason: %s\n", strerror(errno));
-            close(fd); //forse da rimuovere perchè se ne occupa la select (gemini)
             return -1;
         }
 
         if(r==0)
         {
             printf("Client disconnesso");
-            break;
+            close(fd);
+            return 0;
         }
 
         if (buf[received++] == '+'){ //incremento received

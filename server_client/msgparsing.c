@@ -8,7 +8,7 @@
 int has_delim(char* buff, int offset){
     int plus_count = 0;
     int max_len = strlen(buff);
-    for(unsigned i = offset; max_len; i++){
+    for(unsigned i = offset; i<(unsigned)max_len; i++){
         if(buff[i] == ' ') return -1;
         if(buff[i] == '+') {
             plus_count++;
@@ -32,10 +32,10 @@ void parse(char *src, char* dest, int offset){
 
     int delim_index = has_delim(src, offset);
     if(delim_index != -1){
-        if ((size_t)delim_index != strlen(aux) - 3){
-            printf("Errore, delimitatore presente nel messaggio\n"); //lasciare o no?
-            return;
-        }
+        // if ((size_t)delim_index != strlen(aux) - 3){
+        //     printf("Errore, delimitatore presente nel messaggio\n"); //lasciare o no?
+        //     return;
+        // }
         int to_copy = delim_index - offset;
         strncpy(dest, aux, to_copy);
         dest[to_copy] = '\0';
@@ -97,7 +97,7 @@ void get_msg(char*buff, char* msg, int offset){
 //[REGIS id port password]
 void build_regis(char *buff, const char *id, uint16_t port, uint16_t password)
 {
-    int offset = sprintf(buff, "REGIS %s %04u", id, port);
+    int offset = sprintf(buff, "REGIS %s %04u ", id, port);
     buff[offset] = password & 0xFF;            // isolo i primi 8 bit
     buff[offset + 1] = (password >> 8) & 0xFF; // shifto di 8 bit e isolo i restanti
     offset += 2;
@@ -107,7 +107,7 @@ void build_regis(char *buff, const char *id, uint16_t port, uint16_t password)
 //[CONNE id password]
 void build_conne(char *buff, const char *id, uint16_t password)
 {
-    int offset = sprintf(buff, "CONNE %s", id);
+    int offset = sprintf(buff, "CONNE %s ", id);
     buff[offset] = password & 0xFF;
     buff[offset + 1] = (password >> 8) & 0xFF;
     offset += 2;
@@ -182,13 +182,13 @@ void build_oolf(char *buff, const char *id, const char *mess) { sprintf(buff, "O
 void build_eirf(char *buff, const char *id) { sprintf(buff, "EIRF> %s+++", id); }
 
 // [ACKRF]
-void build_ackrf(char *buff) { strcpy(buff, "ACKRF>+++"); }
+void build_ackrf(char *buff) { strcpy(buff, "ACKRF+++"); }
 
 // [FRIEN id]
 void build_frien(char *buff, const char *id) { sprintf(buff, "FRIEN %s+++", id); }
 
 // [NOFRI id]
-void build_nofri(char *buff, const char *id) { sprintf(buff, "NOFRI> %s+++", id); }
+void build_nofri(char *buff, const char *id) { sprintf(buff, "NOFRI %s+++", id); }
 
 // [NOCON]
 void build_nocon(char *buff) { strcpy(buff, "NOCON+++"); }

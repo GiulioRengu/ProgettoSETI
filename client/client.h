@@ -12,8 +12,8 @@ typedef struct {
     bool auth;
 } Client;
 
-// inizializziamo il client
-int client_start(Client *client, const char* id, uint16_t password, uint16_t udp_port);
+// inizializziamo il client (id/password vengono impostati in seguito con regis/conne)
+int client_start(Client *client, uint16_t udp_port);
 
 // connessione TCP al server
 int client_connect(Client *client, const char* server_ip, uint16_t server_port);

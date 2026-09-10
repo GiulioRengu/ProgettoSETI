@@ -1,3 +1,4 @@
+#include <signal.h>
 #include "server.h"
 #include "../server_client/net.h"
 
@@ -71,8 +72,9 @@ void server_accept_client(Server *server){
 void server_handle_client_msg(Server *server, int client_fd){
     char msg[MSG_BUFF_MAXSIZE];
     int r = net_recv_msg(client_fd, msg, MSG_BUFF_MAXSIZE);
-    if(r<0){
+    if(r==0){
         //gestione errore
+        printf("Errore server_handle_client_msg: errore client disconensso");
         return;
     }
 
@@ -86,8 +88,8 @@ void server_handle_client_msg(Server *server, int client_fd){
         case MSG_FLOO_REQ: handle_floo(server, client_fd, msg); break;
         case MSG_LIST_REQ: handle_list(server, client_fd); break;
         case MSG_CONSU:    handle_consu(server, client_fd); break;
-        case MSG_OKIRF:    handle_friend_reply(server, client_fd, msg, true); break;
-        case MSG_NOKRF:    handle_friend_reply(server, client_fd, msg, false); break;
+        case MSG_OKIRF:    handle_friend_reply(server, client_fd, true); break;
+        case MSG_NOKRF:    handle_friend_reply(server, client_fd, false); break;
         case MSG_IQUIT:    handle_quit(server, client_fd); break;
 
         default:

@@ -38,7 +38,7 @@ void handle_regis(Server* server, int client_fd, char* msg){ //serve fare discon
     uint16_t password = (unsigned char)msg[20] | ((unsigned char)msg[21] << 8);
 
     get_id(msg, id);
-    if (net_is_valid_id(id) < 0){
+    if (net_is_valid_id(id) != 0){
         printf("Errore handle_regis: id non valido\n");
         build_gobye(retmsg);
         net_send_str(client_fd, retmsg);
@@ -154,6 +154,8 @@ void handle_frie(Server* server, int client_fd, char* msg){
     User* dest = get_user_by_id(server, dest_id);
 
     if (src == NULL || dest == NULL){
+        // if(src==NULL) printf("Mittente nullo %d\n", client_fd);
+        // if(dest==NULL) printf("Dest nullo %s \n", dest->id);
         printf("Errore handle_frie: utente/i non esistenti\n");
         build_frie_ko(retmsg);
         if(net_send_str(client_fd, retmsg) < 0) server_disconnect(server, client_fd);
@@ -288,6 +290,7 @@ void handle_mess(Server* server, int client_fd, char* msg){
 
 void handle_floo(Server* server, int client_fd, char* msg)
 {
+    printf("%s\n", msg);
     if(server==NULL || client_fd<0 || msg==NULL)
     {
         return;
@@ -298,6 +301,7 @@ void handle_floo(Server* server, int client_fd, char* msg)
 
     User *sender=get_user_by_fd(server, client_fd);
     if(sender==NULL)return;
+    printf("msg prima del parse %s\n", msg);
 
     get_msg(to_send, msg, 6); //[FLOO? ];
 
@@ -309,8 +313,10 @@ void handle_floo(Server* server, int client_fd, char* msg)
         return;
     }
 
-    printf("Inizio FLOO");
+    printf("Inizio FLOO\n");
+    printf("to send : %s\n", to_send);
     execute_flood_bfs(server, sender, to_send);
+    printf("to send : %s\n", to_send);
 
     build_floo_ok(retmsg);
     if(net_send_str(client_fd, retmsg) < 0) server_disconnect(server, client_fd);
@@ -456,19 +462,19 @@ void handle_friend_reply(Server* server, int client_fd, const bool accepted){
     User* target = get_user_by_fd(server, client_fd);
     if (target == NULL){
         printf("Errore handle_friend_reply: Utente destinatario non trovato\n");
-        return;
+        goto fine;
     }
     //controllare se sono gia amici?
 
     if (!target->pending_frie_req || target->pending_frie_id[0] == '\0'){
         printf("Errore handle_friend_reply: %s non ha richieste da accettare\n", target->id);
-        return;
+        goto fine;
     }
 
     User* requester = get_user_by_id(server, target->pending_frie_id);
     if (requester == NULL){
         printf("Errore handle_friend_reply: Utente richiedente non trovato\n");
-        return;
+        goto fine;
     }
 
     char retmsg[9];
@@ -476,13 +482,14 @@ void handle_friend_reply(Server* server, int client_fd, const bool accepted){
     int r = stream_add(requester, target->id, NULL, (accepted ? STREAM_FRIEND_ACC : STREAM_FRIEND_REJ));
     if (r < 0){
         printf("Errore handle_friend_reply: aggiunta stream a %s non riuscito\n", requester->id);
-        return;  
+        goto fine;
+ 
     }
 
     if (accepted){
         if (target->friend_count >= MAX_USERS || requester->friend_count >= MAX_USERS){
         printf("Errore handle_friend_reply: uno dei due utenti ha la lista amici piena\n");
-        return;
+        goto fine;
         }
 
         int i = 0;
@@ -504,12 +511,15 @@ void handle_friend_reply(Server* server, int client_fd, const bool accepted){
     target->pending_frie_req = false;
     target->pending_frie_id[0] = '\0';
     target->has_pending_stream = false;
+    goto fine;
 
+    fine:
     if (net_send_str(client_fd, retmsg) < 0){
         printf("Errore handle_friend_reply: invio ACKRF a %s non riuscito\n", target->id);
         server_disconnect(server, client_fd);
         return;
     }
+
 
 }
 

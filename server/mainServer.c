@@ -19,6 +19,7 @@ void handle_sigint(int sig) {
 
 int main(int argc, char *argv[]) 
 {
+    signal(SIGPIPE, SIG_IGN);
     argc = 0;
     argv = NULL;
     uint16_t port=(uint16_t)6767;

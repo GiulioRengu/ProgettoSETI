@@ -8,10 +8,10 @@ giankojunior
 DA FARE:
 
 
-mainClient.c
+mainClient.c da fixare
 
-handling sig int dalla send del client
+mainServer.c con select fix del ctrl c appena client si connette
 
-mainServer.c con select
+FIX PARSE FLOOD BUGGED
 
 Verbose mode
