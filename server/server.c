@@ -105,7 +105,7 @@ User* get_user_by_id(Server *server, const char *id)
     }
     for(int i=0; i<server->client_count; i++)
     {
-        if(server->users[i].id==id)
+        if(strcmp(server->users[i].id, id) == 0)
         {
             return &server->users[i];
         }

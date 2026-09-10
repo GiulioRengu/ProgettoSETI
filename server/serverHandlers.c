@@ -303,7 +303,7 @@ void handle_floo(Server* server, int client_fd, char* msg)
 
     if(net_is_valid_msg(to_send)<0)
     {
-        build_floo_ko(retmsg);
+        build_floo_ok(retmsg); //??
         printf("Errore Flood: msg non valido\n");
         if(net_send_str(client_fd, retmsg) < 0) server_disconnect(server, client_fd);
         return;
@@ -331,7 +331,7 @@ void handle_list(Server* server, int client_fd){
         return;
     }
 
-    for (unsigned i = 0; i<server->client_count; i++){
+    for (int i = 0; i<server->client_count; i++){
         build_linum(u_id, server->users[i].id);
         if (net_send_str(client_fd, u_id) < 0){
             printf("Errore handle_list: errore invio LINUM, inviati %d\n", i);
@@ -450,7 +450,7 @@ void handle_consu(Server* server, int client_fd){
         return;
 }
 
-void handle_friend_reply(Server* server, int client_fd, char* msg, const bool accepted){
+void handle_friend_reply(Server* server, int client_fd, const bool accepted){
     if (server == NULL || client_fd < 0) return;
 
     User* target = get_user_by_fd(server, client_fd);

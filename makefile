@@ -7,7 +7,7 @@ CLIENT_DIR = client
 COMMON_DIR = server_client
 
 # File sorgenti (aggiunto msgparsing.c ai sorgenti di test)
-SERVER_SRCS = $(SERVER_DIR)/mainServer.c $(SERVER_DIR)/server.c $(COMMON_DIR)/msgparsing.c $(COMMON_DIR)/net.c $(COMMON_DIR)/streamHandlers.c $(COMMON_DIR)/serverHandlers.c
+SERVER_SRCS = $(SERVER_DIR)/mainServer.c $(SERVER_DIR)/server.c $(SERVER_DIR)/serverHandlers.c $(SERVER_DIR)/streamHandlers.c $(SERVER_DIR)/floodHandler.c $(COMMON_DIR)/msgparsing.c $(COMMON_DIR)/net.c
 CLIENT_SRCS = $(CLIENT_DIR)/mainClient.c $(COMMON_DIR)/msgparsing.c $(COMMON_DIR)/net.c
 TEST_SRCS = test.c $(COMMON_DIR)/msgparsing.c $(COMMON_DIR)/net.c
 

@@ -1,4 +1,6 @@
 #include "floodHandler.h"
+#include "streamHandlers.h"
+#include "server.h"
 
 int get_user_index(Server* server, const char* id)
 {
