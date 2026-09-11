@@ -20,28 +20,94 @@ int has_delim(char* buff, int offset){
 }
 
 void parse(char *src, char* dest, int offset){
-    if(src == NULL || dest == NULL) return;
-    int len = strlen(src);
+    // if(src == NULL || dest == NULL) return;
+    // int len = strlen(src);
 
-    if(offset >= len){
+    // if(offset >= len){
+    //     dest[0] = '\0';
+    //     return;
+    // }
+
+    // char* aux = src+offset;
+
+    // int delim_index = has_delim(src, offset);
+    // if(delim_index != -1){
+    //     // if ((size_t)delim_index != strlen(aux) - 3){
+    //     //     printf("Errore, delimitatore presente nel messaggio\n"); //lasciare o no?
+    //     //     return;
+    //     // }
+    //     int to_copy = delim_index - offset;
+    //     strncpy(dest, aux, to_copy);
+    //     dest[to_copy] = '\0';
+    // }
+
+    // else sscanf(aux, "%s", dest);
+    if (src == NULL || dest == NULL || offset < 0) return;
+
+    int len = strlen(src);
+    if (offset >= len){
         dest[0] = '\0';
         return;
     }
 
-    char* aux = src+offset;
+    int plus_count = 0;
+    int delim_index = -1;
 
-    int delim_index = has_delim(src, offset);
-    if(delim_index != -1){
-        // if ((size_t)delim_index != strlen(aux) - 3){
-        //     printf("Errore, delimitatore presente nel messaggio\n"); //lasciare o no?
-        //     return;
-        // }
-        int to_copy = delim_index - offset;
-        strncpy(dest, aux, to_copy);
-        dest[to_copy] = '\0';
+    for (int i = offset; i < len; i++){
+        if (src[i] == ' '){
+            delim_index = -1;
+            break;
+        }
+        if (src[i] == '+'){
+            plus_count++;
+            if (plus_count == 3){
+                delim_index = i - 2;
+                break;
+            }
+        }
+        else plus_count = 0;
     }
 
-    else sscanf(aux, "%s", dest);
+    if (delim_index != -1){
+        int to_copy = delim_index - offset;
+        strncpy(dest, src + offset, to_copy);
+        dest[to_copy] = '\0';
+    }
+    else sscanf(src + offset, "%s", dest);
+}
+
+void extract_msg(char* src, char* dest, int offset){
+    if (src == NULL || dest == NULL) return;
+    int len = strlen(src);
+    if (offset < 0 || offset > len){
+        dest[0] = '\0';
+        return;
+    }
+
+    int end = -1;
+    for (int i = offset; i + 2 < len; i++){
+        if (src[i] == '+' && src[i+1] == '+' && src[i+2] == '+'){
+            end = i;
+            break;
+        }
+    }
+
+    if (end == -1){
+        /* nessun terminatore "+++" trovato -> messaggio malformato */
+        dest[0] = '\0';
+        return;
+    }
+
+    int msg_len = end - offset;
+    if (msg_len > MSG_LENGTH_MAX){
+        /* troppo lungo: lo rifiuto invece di troncarlo silenziosamente,
+         * cosi' un messaggio malformato non viene "corretto" di nascosto */
+        dest[0] = '\0';
+        return;
+    }
+
+    strncpy(dest, src + offset, msg_len);
+    dest[msg_len] = '\0';
 }
 
 int get_type(char* buff){
@@ -87,7 +153,7 @@ void get_port(char* buff, char* port, int offset){
 }
 
 void get_msg(char*buff, char* msg, int offset){
-    parse(buff, msg, offset);
+    extract_msg(buff, msg, offset);
 }
 
 /*------------------------

@@ -17,6 +17,9 @@ void server_accept_client(Server *server);
 // Legge e processa un messaggio da un file descriptor client
 void server_handle_client_msg(Server *server, int client_fd);
 
+//Ritorna 0 se la porta e' disponibile, -1 altrimenti
+int is_port_available(uint16_t port, Server* server); 
+
 // Funzioni di utilità interne per il Server
 User* get_user_by_id(Server *server, const char *id);
 User* get_user_by_fd(Server *server, int fd);
@@ -28,6 +31,8 @@ int server_send_udp_notification(Server *server, User *user, StreamType type);
 void server_add_stream(Server *server, User *user, Stream *new_stream);
 
 void server_disconnect(Server *server, int fd);
+
+void server_remove_client(Server* server, int client_fd);
 
 // Pulizia risorse server
 void server_cleanup(Server *server);

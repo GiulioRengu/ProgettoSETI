@@ -19,10 +19,19 @@ void handle_sigint(int sig) {
 
 int main(int argc, char *argv[]) 
 {
+    if (argc != 2){
+        printf("Errore argomenti\nUsage: %s <porta-server>\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }
+    int port = atoi(argv[1]);
+    if (port < 0 || port > 9999){
+        printf("Errore, la porta deve essere compresa tra 0 e 9999\n");
+        exit(EXIT_FAILURE);
+    }
+
     signal(SIGPIPE, SIG_IGN);
     argc = 0;
     argv = NULL;
-    uint16_t port=(uint16_t)6767;
     Server server;
     
     global_server=&server;
@@ -31,7 +40,7 @@ int main(int argc, char *argv[])
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = 0;
     if (sigaction(SIGINT, &sa, NULL) < 0){
-        perror("Errore sigaction");
+        perror("Errore sigaction\n");
         return EXIT_FAILURE;
     }  
 

@@ -27,8 +27,9 @@ void handle_regis(Server* server, int client_fd, char* msg){ //serve fare discon
 	get_port(msg, port, 15);
 
     uint16_t udp_port = (uint16_t)atoi(port);
-    if (net_is_valid_port(udp_port) < 0){
-        printf("Errore handle_regis: port non valida\n");
+
+    if (net_is_valid_port(udp_port) < 0 || is_port_available(udp_port, server) < 0){
+        printf("Errore handle_regis: port non valida o gia utilizzata da altro utente\n");
         build_gobye(retmsg);
         net_send_str(client_fd, retmsg);
         server_disconnect(server, client_fd);
@@ -303,7 +304,7 @@ void handle_floo(Server* server, int client_fd, char* msg)
     if(sender==NULL)return;
     printf("msg prima del parse %s\n", msg);
 
-    get_msg(to_send, msg, 6); //[FLOO? ];
+    get_msg(msg, to_send, 6); //[FLOO? ];
 
     if(net_is_valid_msg(to_send)<0)
     {

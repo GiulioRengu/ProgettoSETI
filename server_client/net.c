@@ -187,7 +187,7 @@ int net_recv_msg(int fd, char *buf, int bufsize){
 
         if(r==0)
         {
-            printf("Client disconnesso");
+            printf("Client disconnesso\n");
             close(fd);
             return 0;
         }

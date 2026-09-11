@@ -48,6 +48,8 @@ int has_delim(char* buff, int offset);
 
 void parse(char *src, char* dest, int offset);
 
+void extract_msg(char* src, char* dest, int offset);
+
 int get_type(char* buff);
 // offset=6 (type + space)
 void get_id(char* buff, char* id);

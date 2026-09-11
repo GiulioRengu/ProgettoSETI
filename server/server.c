@@ -34,7 +34,7 @@ void server_run(Server *server)
         read_fds=server->master_fds;
         if(select(server->fdmax+1, &read_fds, NULL, NULL, NULL)==-1)
         {
-            printf("Errore select | Reason: %s", strerror(errno));
+            printf("Errore select | Reason: %s\n", strerror(errno));
             break;
         }
         for(int i=0; i<=server->fdmax; i++) //cicliamo tutti i fd
@@ -72,9 +72,20 @@ void server_accept_client(Server *server){
 void server_handle_client_msg(Server *server, int client_fd){
     char msg[MSG_BUFF_MAXSIZE];
     int r = net_recv_msg(client_fd, msg, MSG_BUFF_MAXSIZE);
-    if(r==0){
-        //gestione errore
-        printf("Errore server_handle_client_msg: errore client disconensso");
+    // if(r==0){
+    //     //gestione errore
+    //     printf("Errore server_handle_client_msg: errore client disconensso");
+    //     return;
+    // }
+    if (r == 0) {
+        printf("Errore server_handle_client_msg: client con fd %d disconnesso\n", client_fd);
+        server_remove_client(server, client_fd);
+        return;
+    }
+
+    if (r < 0) {
+        perror("Errore server_handle_client_msg: rete caduta durante net_recv_msg\n");
+        server_remove_client(server, client_fd);
         return;
     }
 
@@ -98,11 +109,18 @@ void server_handle_client_msg(Server *server, int client_fd){
     }
 }
 
+int is_port_available(uint16_t port, Server* server){
+    for (int i = 0; i<server->client_count; i++){
+        if (server->users[i].udp_port == port) return -1;
+    }
+    return 0;
+}
+
 User* get_user_by_id(Server *server, const char *id)
 {
     if(server==NULL || server->client_count==0)
     {
-        printf("Nessun utente registrato nel server o nessun server disponibile\n");
+        //printf("Nessun utente registrato nel server o nessun server disponibile\n");
         return NULL;
     }
     for(int i=0; i<server->client_count; i++)
@@ -112,7 +130,7 @@ User* get_user_by_id(Server *server, const char *id)
             return &server->users[i];
         }
     }
-    printf("User %s non trovato", id);
+    //printf("User %s non trovato", id);
     return NULL;
 }
 
@@ -144,7 +162,7 @@ int server_send_udp_notification(Server *server, User *user, StreamType type)
     }
     if(net_send_udp(user, type, user->stream_count)<0)
     {
-        printf("Problema a mandare UDP notif a %s",user->id);
+        printf("Problema a mandare UDP notif a %s\n",user->id);
         return -1;
     }
 
@@ -167,6 +185,17 @@ void server_disconnect(Server *server, int fd){
     memset(server->pendingClients[fd], 0, INET6_ADDRSTRLEN);
     FD_CLR(fd, &server->master_fds);
     close(fd);
+}
+
+void server_remove_client(Server* server, int client_fd)
+{
+    FD_CLR(client_fd, &server->master_fds);
+    close(client_fd);
+
+    if (client_fd == server->fdmax) {
+        while (server->fdmax > 0 && !FD_ISSET(server->fdmax, &server->master_fds))
+            server->fdmax--;
+    }
 }
 
 // Pulizia risorse server
