@@ -45,7 +45,7 @@ static void check_auth_message(uint16_t password, bool registration)
     close(sockets[0]);
     close(sockets[1]);
 }
-
+aa
 int main(void)
 {
     const uint16_t passwords[] = {
