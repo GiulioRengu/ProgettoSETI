@@ -189,8 +189,7 @@ void server_disconnect(Server *server, int fd){
 
 void server_remove_client(Server* server, int client_fd)
 {
-    FD_CLR(client_fd, &server->master_fds);
-    close(client_fd);
+    server_disconnect(server, client_fd);
 
     if (client_fd == server->fdmax) {
         while (server->fdmax > 0 && !FD_ISSET(server->fdmax, &server->master_fds))

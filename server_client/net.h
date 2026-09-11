@@ -70,6 +70,7 @@ int net_accept(int server_fd, char *ip_out, uint16_t *port_out);
 /*
  * Legge da fd accumulando in buf (bufsize byte) finché non trova
  * MSG_TERMINATOR ("+++") oppure il buffer è pieno.
+ * I byte della password binaria in REGIS/CONNE non fanno parte del terminatore.
  *
  * buf viene null-terminato.
  * Ritorna il numero di byte letti (incluso +++), o -1 in caso
@@ -98,7 +99,8 @@ int net_send(int fd, const char *buf, int len);
 
 /*
  * Comodità: chiama net_send con strlen(buf) come lunghezza.
- * Usare per tutti i messaggi TCP del protocollo (sono stringhe).
+ * Usare solo per messaggi testuali. REGIS/CONNE contengono una password
+ * binaria: usare net_send con la lunghezza restituita dal builder.
  *
  * Ritorna il numero di byte inviati, o -1 in caso di errore.
  */
@@ -135,13 +137,13 @@ int net_send_udp(/*int udp_fd,*/  const User *target, StreamType type, int strea
  */
 void net_close(int *fd);
 
-int net_is_valid_id(char *msg);
+int net_is_valid_id(const char *msg);
 
-int net_is_valid_port(uint16_t port);
+int net_is_valid_port(const long port);
 
-int net_is_valid_password(int pwd);
+int net_is_valid_password(const long pwd);
 
 /* controlla che ci sia una sequenza di +++*/
-int net_is_valid_msg(char *msg);
+int net_is_valid_msg(const char *msg);
 
 #endif

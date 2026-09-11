@@ -74,6 +74,15 @@ int net_connect_tcp(const char *host, uint16_t port)
     server_addr.sin6_port=htons(port);
 
     int ret=inet_pton(AF_INET6, host, &server_addr.sin6_addr);
+    if (ret == 0){
+        struct in_addr ipv4;
+        if (inet_pton(AF_INET, host, &ipv4) == 1){
+            server_addr.sin6_addr.s6_addr[10] = 0xff;
+            server_addr.sin6_addr.s6_addr[11] = 0xff;
+            memcpy(&server_addr.sin6_addr.s6_addr[12], &ipv4, sizeof(ipv4));
+            ret = 1;
+        }
+    }
     if(ret==0)
     {
         printf("Indirizzo invalido | host %s", host);
@@ -175,6 +184,7 @@ int net_accept(int server_fd, char *ip_out, uint16_t *port_out){
 int net_recv_msg(int fd, char *buf, int bufsize){
     if (buf == NULL || bufsize <= 0) return -1;
     int plus_count = 0, received = 0;
+    int password_offset = -1;
     ssize_t r = 0;
 
     while(received < bufsize-1){
@@ -188,11 +198,24 @@ int net_recv_msg(int fd, char *buf, int bufsize){
         if(r==0)
         {
             printf("Client disconnesso\n");
-            close(fd);
             return 0;
         }
 
-        if (buf[received++] == '+'){ //incremento received
+        received++;
+        if (received == 6){
+            if (memcmp(buf, "REGIS ", 6) == 0) password_offset = 20;
+            else if (memcmp(buf, "CONNE ", 6) == 0) password_offset = 15;
+        }
+        
+        //fix conteggio ++ nella password
+        // I due byte della password possono contenere anche '+' e NUL.
+        if (password_offset >= 0 && received > password_offset &&
+            received <= password_offset + 2){
+            plus_count = 0;
+            continue;
+        }
+
+        if (buf[received - 1] == '+'){
             plus_count++;
             if (plus_count == 3) break;
         }
@@ -293,7 +316,7 @@ int net_send_udp(/*int udp_fd,*/ const User *target, StreamType type, int stream
  * @retval -1 id troppo lungo (max 8 char)
  * @retval 1 id contiene caratteri non alfanumerici
  */
-int net_is_valid_id(char *msg){
+int net_is_valid_id(const char *msg){
     if (strlen(msg) != 8) return -1;
     for(unsigned i = 0; i<8; i++) if (!isalnum(msg[i])) return 1;
     return 0;
@@ -303,26 +326,23 @@ int net_is_valid_id(char *msg){
  * @retval 0 va bene
  * @retval -1 non va bene
  */
-int net_is_valid_port(uint16_t port){
-    return (port>0 && port<9999) ? 0 : -1;
+int net_is_valid_port(const long port){ //long perchè così controllo veramente se port>9999
+    return (port>0 && port<=9999) ? 0 : -1;
 }
 
 /**
  * @retval 0 va bene
- * @retval 1 non va bene
+ * @retval -1 non va bene
  */
-int net_is_valid_password(int pwd){
-    return (pwd>0 && pwd<65536) ? 0 : -1;
+int net_is_valid_password(const long pwd){ //come per is_valid_port
+    return (pwd>=0 && pwd<=65535) ? 0 : -1;
 }
 
 /**
- * @retval -1 se troppo lungo
+ * @retval messaggio NULL, troppo lungo o contenente '+++'
  * @retval 0 ha già il terminatore
- * @retval 1 va bene
- * 
  */
-int net_is_valid_msg(char *msg){
-    if (strlen(msg) > MSG_LENGTH_MAX) return -1;
-
-    return (strstr(msg, "+++") != NULL) ? 1 : 0; //se msg ha +++ ritorna -1
+int net_is_valid_msg(const char *msg){
+    if (msg == NULL || strlen(msg) > MSG_LENGTH_MAX || strstr(msg, "+++") != NULL) return -1;
+    return 0;
 }

@@ -22,9 +22,21 @@ CLIENT_BIN = client_exe
 TEST_BIN = test_exe
 
 # Regole principali
-.PHONY: all clean
+.PHONY: all clean test-reconnection test-friend-reply test-friend-reminder
 
 all: $(SERVER_BIN) $(CLIENT_BIN) $(TEST_BIN)
+
+test-reconnection:
+	$(CC) $(CFLAGS) -o /tmp/seti_test_reconnection tests/test_reconnection.c $(filter-out $(SERVER_DIR)/mainServer.c,$(SERVER_SRCS))
+	/tmp/seti_test_reconnection
+
+test-friend-reply:
+	$(CC) $(CFLAGS) -o /tmp/seti_test_friend_reply tests/test_friend_reply.c $(filter-out $(SERVER_DIR)/mainServer.c,$(SERVER_SRCS))
+	/tmp/seti_test_friend_reply
+
+test-friend-reminder:
+	$(CC) $(CFLAGS) -o /tmp/seti_test_friend_reminder tests/test_friend_reminder.c $(filter-out $(SERVER_DIR)/mainServer.c,$(SERVER_SRCS))
+	/tmp/seti_test_friend_reminder
 
 # Compilazione degli eseguibili
 $(SERVER_BIN): $(SERVER_OBJS)

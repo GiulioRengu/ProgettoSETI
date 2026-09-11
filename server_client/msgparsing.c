@@ -161,23 +161,25 @@ void get_msg(char*buff, char* msg, int offset){
 -------------------------*/
 
 //[REGIS id port password]
-void build_regis(char *buff, const char *id, uint16_t port, uint16_t password)
+int build_regis(char *buff, const char *id, uint16_t port, uint16_t password)
 {
     int offset = sprintf(buff, "REGIS %s %04u ", id, port);
     buff[offset] = password & 0xFF;            // isolo i primi 8 bit
     buff[offset + 1] = (password >> 8) & 0xFF; // shifto di 8 bit e isolo i restanti
     offset += 2;
     memcpy(buff + offset, "+++", 4);
+    return offset + 3;
 }
 
 //[CONNE id password]
-void build_conne(char *buff, const char *id, uint16_t password)
+int build_conne(char *buff, const char *id, uint16_t password)
 {
     int offset = sprintf(buff, "CONNE %s ", id);
     buff[offset] = password & 0xFF;
     buff[offset + 1] = (password >> 8) & 0xFF;
     offset += 2;
     memcpy(buff + offset, "+++", 4);
+    return offset + 3;
 }
 
 // [FRIE? id]

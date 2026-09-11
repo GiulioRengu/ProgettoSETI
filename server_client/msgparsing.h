@@ -65,10 +65,12 @@ void get_msg(char*buff, char* msg, int offset);
 -------------------------*/
 
 //[REGIS id port password]
-void build_regis(char *buff, const char *id, uint16_t port, uint16_t password);
+// Ritorna la lunghezza in byte, escluso il NUL finale (password binaria).
+int build_regis(char *buff, const char *id, uint16_t port, uint16_t password);
 
 //[CONNE id password]
-void build_conne(char *buff, const char *id, uint16_t password);
+// Ritorna la lunghezza in byte, escluso il NUL finale (password binaria).
+int build_conne(char *buff, const char *id, uint16_t password);
 
 // [FRIE? id]
 void build_frie_req(char *buff, const char *id);

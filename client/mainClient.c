@@ -5,19 +5,24 @@
 
 static void print_menu(void)
 {
-    printf("\n--- Comandi disponibili ---\n");
-    printf("regis <id> <pass>     -> registra un nuovo utente (id 8 caratteri alfanumerici, pass 0-65535)\n");
-    printf("conne <id> <pass>     -> connettiti/ri-registrati con un id gia' esistente\n");
-    printf("frie <id>             -> invia richiesta di amicizia a <id>\n");
-    printf("mess <id> <testo>     -> invia messaggio a <id>\n");
-    printf("floo <testo>          -> invia messaggio in flood a tutti gli amici\n");
-    printf("list                  -> richiedi lista utenti registrati\n");
-    printf("consu                 -> consulta il prossimo stream in sospeso\n");
-    printf("acc                   -> accetta la richiesta di amicizia pendente\n");
-    printf("rej                   -> rifiuta la richiesta di amicizia pendente\n");
-    printf("quit                  -> disconnettiti e chiudi il client\n");
-    printf("---------------------------\n> ");
-    fflush(stdout);
+    puts("------------------------------------------------------------------------");
+    puts("                                  IPortBook");
+    puts("------------------------------------------------------------------------");
+    puts("regis <id> <port> <password>  registra un nuovo utente");
+    puts("conne <id> <password>         riconnettiti con un utente registrato");
+    puts("FRIE? <id>                    richiedi un'amicizia");
+    puts("MESS? <id> <mess>             invia un messaggio a un amico");
+    puts("FLOO? <mess>                  invia un messaggio di flood");
+    puts("LIST?                         elenca gli utenti registrati");
+    puts("CONSU                         consulta un solo flusso");
+    puts("OKIRF                         accetta la richiesta ricevuta con EIRF>");
+    puts("NOKRF                         rifiuta la richiesta ricevuta con EIRF>");
+    puts("IQUIT                         disconnettiti e attendi GOBYE");
+    puts("HELP                          mostra questi comandi (solo locale)");
+    puts("Id: 8 caratteri alfanumerici; password: 0-65535; porta: 1-9998.");
+    puts("Messaggi: massimo 200 byte, senza +++.");
+    puts("Scrivi i comandi senza +++: il client aggiunge il terminatore.");
+    puts("------------------------------------------------------------------------");
 }
 
 int client_start(Client *client, uint16_t udp_port)
@@ -53,6 +58,60 @@ int client_connect(Client *client, const char *server_ip, uint16_t server_port)
     return 0;
 }
 
+static int parse_auth_number(const char *text, long min, long max, uint16_t *value)
+{
+    char *endptr;
+    errno = 0;
+    long number = strtol(text, &endptr, 10);
+    if (errno == ERANGE || endptr == text || *endptr != '\0' || number < min || number > max) return -1;
+    *value = (uint16_t)number;
+    return 0;
+}
+
+static void handle_auth_command(Client *client, const char *line, bool registration)
+{
+    char id[10], port_str[6], pwd_str[7];
+    char extra, buff[MSG_BUFF_MAXSIZE];
+    /* Read complete tokens and reject missing or extra arguments. */
+    int fields = registration ? sscanf(line, "%*s %9s %5s %6s %c", id, port_str, pwd_str, &extra) : sscanf(line, "%*s %9s %6s %c", id, pwd_str, &extra);
+    if (fields != (registration ? 3 : 2))
+    { 
+        puts(registration ? "Uso: regis <id> <port> <password>" : "Uso: conne <id> <password>");
+        return;
+    }
+    if (net_is_valid_id(id) != 0){
+        puts("Id non valido: deve essere alfanumerico ed esattamente di 8 caratteri.");
+        return;
+    }
+    
+    // uint16_t port=client->udp_port;
+    uint16_t password=atoi(pwd_str);
+    uint16_t udp_port=atoi(port_str);
+    if (registration && net_is_valid_port(udp_port) != 0){
+        puts("Porta UDP non valida: deve essere compresa tra 1 e 9999.");
+        return;
+    }
+    if (net_is_valid_port(password) != 0){
+        puts("Password non valida: deve essere compresa tra 0 e 65535.");
+        return;
+    }
+    if (registration && (udp_port != client->udp_port || client->udp_fd < 0)){
+        /* Bind before advertising the port; retain the old socket on failure. */
+        int udp_fd = net_create_udp_socket(udp_port);
+        if (udp_fd < 0){
+            puts("Impossibile usare la porta UDP richiesta.");
+            return;
+        }
+        if (client->udp_fd >= 0) close(client->udp_fd);
+        client->udp_fd = udp_fd;
+        client->udp_port = udp_port;
+    }
+    strcpy(client->id, id);
+    client->password = password;
+    int len = registration ? build_regis(buff, id, udp_port, password) : build_conne(buff, id, password);
+    net_send(client->tcp_fd, buff, len);
+}
+
 /* interpreta una riga digitata dall'utente e la manda al server */
 static int handle_stdin_line(Client *client)
 {
@@ -65,51 +124,11 @@ static int handle_stdin_line(Client *client)
     char cmd[16] = {0};
     char arg1[ID_LENGTH + 1] = {0};
     char buff[MSG_BUFF_MAXSIZE];
-    
+
     sscanf(line, "%15s", cmd);
-    
-    if (strcmp(cmd, "regis") == 0){
-        char pwd_str[7] = {0};
-        get_id(line, arg1);
-        if (sscanf(line, "%*s %*s %s", pwd_str) != 1){
-            printf("Uso: regis <id> <password>\n");
-        }
-        else if (net_is_valid_id(arg1) != 0){
-            printf("Id non valido: deve essere alfanumerico ed esattamente di 8 caratteri.\n");
-        }
-        char *endptr;
-        long pwd = strtol(pwd_str, &endptr, 10);
-        if (*endptr != '\0' || net_is_valid_password((int)pwd) != 0){
-            printf("Password non valida: deve essere compresa tra 0 e 65535.\n");
-        }
-        else{
-            strncpy(client->id, arg1, ID_LENGTH);
-            client->id[ID_LENGTH] = '\0';
-            printf("%s %lu\n", client->id, strlen(client->id));
-            client->password = (uint16_t)pwd;
-            build_regis(buff, client->id, client->udp_port, client->password);
-            printf("%s\n", buff);
-            net_send_str(client->tcp_fd, buff);
-        }
-    }
-    else if (strcmp(cmd, "conne") == 0){
-        long pwd = -1;
-        if (sscanf(line, "%*s %8s %ld", arg1, &pwd) != 2){
-            printf("Uso: conne <id> <password>\n");
-        }
-        else if (net_is_valid_id(arg1) != 0){
-            printf("Id non valido: deve essere alfanumerico ed esattamente di 8 caratteri.\n");
-        }
-        else if (net_is_valid_password((int)pwd) != 0){
-            printf("Password non valida: deve essere compresa tra 0 e 65535.\n");
-        }
-        else{
-            strncpy(client->id, arg1, ID_LENGTH);
-            client->id[ID_LENGTH] = '\0';
-            client->password = (uint16_t)pwd;
-            build_conne(buff, client->id, client->password);
-            net_send_str(client->tcp_fd, buff);
-        }
+
+    if (strcmp(cmd, "regis") == 0 || strcmp(cmd, "conne") == 0){
+        handle_auth_command(client, line, strcmp(cmd, "regis") == 0);
     }
     else if (strcmp(cmd, "frie") == 0){
         sscanf(line, "%*s %8s", arg1);
@@ -134,16 +153,44 @@ static int handle_stdin_line(Client *client)
         net_send_str(client->tcp_fd, buff);
     }
     else if (strcmp(cmd, "consu") == 0){
-        build_consu(buff);
+        if (client->pending_friend_reply){
+            puts("Rispondi prima alla richiesta con okirf o nokrf.");
+        }
+        else if (client->awaiting_ackrf){
+            puts("Attendi ACKRF dal server.");
+        }
+        else{
+            build_consu(buff);
+            net_send_str(client->tcp_fd, buff);
+        }
+    }
+    else if (strcmp(cmd, "okirf") == 0 || strcmp(cmd, "OKIRF") == 0 ||
+             strcmp(cmd, "nokrf") == 0 || strcmp(cmd, "NOKRF") == 0){
+        if (client->awaiting_ackrf){
+            puts("Attendi ACKRF dal server.");
+        }
+        else if (!client->pending_friend_reply){
+            puts("Nessuna richiesta EIRF> a cui rispondere.");
+        }
+        else{
+            if (strcmp(cmd, "okirf") == 0 || strcmp(cmd, "OKIRF") == 0)
+                build_okirf(buff);
+            else
+                build_nokrf(buff);
+            if (net_send_str(client->tcp_fd, buff) >= 0){
+                client->pending_friend_reply = false;
+                client->awaiting_ackrf = true;
+            }
+        }
+    }
+    else if(strcmp(cmd, "iquit")==0)
+    {
+        build_iquit(buff);
         net_send_str(client->tcp_fd, buff);
     }
-    else if (strcmp(cmd, "acc") == 0){
-        build_okirf(buff);
-        net_send_str(client->tcp_fd, buff);
-    }
-    else if (strcmp(cmd, "rej") == 0){
-        build_nokrf(buff);
-        net_send_str(client->tcp_fd, buff);
+    else if(strcmp(cmd, "help")==0)
+    {
+        print_menu();
     }
     else if (strcmp(cmd, "quit") == 0){
         return -1;
@@ -157,25 +204,58 @@ static int handle_stdin_line(Client *client)
     return 0;
 }
 
+static void handle_server_message(Client *client, const char *buf, int len)
+{
+    /* Enable replies only for a complete EIRF> <8-character id>+++ frame. */
+    if(len==6+ID_LENGTH+3 && memcmp(buf, "EIRF> ", 6)==0 && memcmp(buf+6+ID_LENGTH, "+++", 3)==0){
+        char id[ID_LENGTH+1];
+        memcpy(id, buf + 6, ID_LENGTH);
+        id[ID_LENGTH]='\0';
+        if(net_is_valid_id(id)==0 && !client->awaiting_ackrf){
+            client->pending_friend_reply=true;
+            puts("Richiesta di amicizia ricevuta: rispondi con okirf o nokrf.");
+        }
+    }
+    else if(len==8 && memcmp(buf, "ACKRF+++", 8)==0){
+        client->awaiting_ackrf=false;
+    }
+    // else if(len==8 && memcmp(buf, "GOBYE+++", 8)==0){
+    //     client->pending_friend_reply=false;
+    //     client->awaiting_ackrf=false;
+    // }
+}
+
 void client_run(Client *client)
 {
     if (client == NULL || client->tcp_fd < 0 || client->udp_fd < 0) return;
 
-    fd_set master, read_fds;
-    int fdmax = client->tcp_fd > client->udp_fd ? client->tcp_fd : client->udp_fd;
-
-    FD_ZERO(&master);
-    FD_SET(STDIN_FILENO, &master);
-    FD_SET(client->tcp_fd, &master);
-    FD_SET(client->udp_fd, &master);
-
     print_menu();
 
     while (1){
-        read_fds = master;
+        /* REGIS may replace the UDP socket, so rebuild the set each time. */
+        int selected_udp_fd = client->udp_fd;
+        int fdmax = client->tcp_fd > selected_udp_fd ? client->tcp_fd : selected_udp_fd;
+        fd_set read_fds;
+        FD_ZERO(&read_fds);
+        FD_SET(STDIN_FILENO, &read_fds);
+        FD_SET(client->tcp_fd, &read_fds);
+        FD_SET(selected_udp_fd, &read_fds);
         if (select(fdmax + 1, &read_fds, NULL, NULL, NULL) < 0){
             printf("Errore select | Reason: %s\n", strerror(errno));
             break;
+        }
+
+        if (FD_ISSET(client->tcp_fd, &read_fds)){
+            char buf[MSG_BUFF_MAXSIZE];
+            int r = net_recv_msg(client->tcp_fd, buf, MSG_BUFF_MAXSIZE);
+            if (r <= 0){
+                printf("\nIl server ha chiuso la connessione.\n");
+                break;
+            }
+            printf("\n[SERVER] %s\n", buf);
+            handle_server_message(client, buf, r);
+            printf("> ");
+            fflush(stdout);
         }
 
         if (FD_ISSET(STDIN_FILENO, &read_fds)){
@@ -185,18 +265,7 @@ void client_run(Client *client)
             }
         }
 
-        if (FD_ISSET(client->tcp_fd, &read_fds)){
-            char buf[MSG_BUFF_MAXSIZE];
-            int r = net_recv_msg(client->tcp_fd, buf, MSG_BUFF_MAXSIZE);
-            if (r == 0){
-                printf("\nIl server ha chiuso la connessione.\n");
-                break;
-            }
-            printf("\n[SERVER] %s\n> ", buf);
-            fflush(stdout);
-        }
-
-        if (FD_ISSET(client->udp_fd, &read_fds)){
+        if (client->udp_fd == selected_udp_fd && FD_ISSET(selected_udp_fd, &read_fds)){
             char buf[8];
             struct sockaddr_storage src_addr;
             socklen_t addr_len = sizeof(src_addr);
@@ -209,6 +278,8 @@ void client_run(Client *client)
             }
         }
     }
+    client->pending_friend_reply = false;
+    client->awaiting_ackrf = false;
 }
 
 void client_disconnect(Client *client)
@@ -226,6 +297,9 @@ void client_cleanup(Client *client)
     if (client->udp_fd >= 0) close(client->udp_fd);
     client->tcp_fd = -1;
     client->udp_fd = -1;
+    client->auth=0;
+    client->pending_friend_reply = false;
+    client->awaiting_ackrf = false;
 }
 
 /* ═══════════════════════════════════════════════════════════

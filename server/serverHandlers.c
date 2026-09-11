@@ -136,13 +136,25 @@ void handle_conne(Server* server, int client_fd, char* msg){
     strncpy(target->ip, server->pendingClients[client_fd], INET6_ADDRSTRLEN);
     memset(server->pendingClients[client_fd], 0, INET6_ADDRSTRLEN);
 
-    build_welco(retmsg);
+    build_hello(retmsg);
     if(net_send_str(client_fd, retmsg) < 0){
         printf("Errore handle_conne: errore invio HELLO+++\n");
         server_disconnect(server, client_fd);
         return;
     }
 
+    // Il nuovo client deve ricevere di nuovo la richiesta ancora senza risposta.
+    if(target->pending_frie_req && target->pending_frie_id[0]!='\0')
+    {
+        char frie_reminder[6 +ID_LENGTH+3+1]; //eirf> id +++\0
+        build_eirf(frie_reminder, target->pending_frie_id);
+        if(net_send_str(client_fd, frie_reminder)<0)
+        {
+            printf("Errore handle_conne: errore invio promemoria EIRF>\n");
+            server_disconnect(server, client_fd);
+            return;
+        }
+    }
 }
 
 void handle_frie(Server* server, int client_fd, char* msg){
@@ -235,7 +247,7 @@ void handle_frie(Server* server, int client_fd, char* msg){
 void handle_mess(Server* server, int client_fd, char* msg){
     if (server == NULL || client_fd < 0 || msg == NULL) return;
     char retmsg[9]; 
-    char to_send[MSG_LENGTH_MAX];
+    char to_send[MSG_LENGTH_MAX+1];
 
     User* src = get_user_by_fd(server, client_fd);
     char dest_id[ID_LENGTH+1];
@@ -367,6 +379,9 @@ void handle_consu(Server* server, int client_fd){
     if(user->streams==NULL && !user->has_pending_stream)
     {
         printf("Lista stream vuota\n");
+        char retmsg[9];
+        build_nocon(retmsg);
+        if(net_send_str(client_fd, retmsg)<0) server_disconnect(server, client_fd);
         return;
     }
 
@@ -463,7 +478,7 @@ void handle_friend_reply(Server* server, int client_fd, const bool accepted){
     User* target = get_user_by_fd(server, client_fd);
     if (target == NULL){
         printf("Errore handle_friend_reply: Utente destinatario non trovato\n");
-        goto fine;
+        return;
     }
     //controllare se sono gia amici?
 
@@ -507,7 +522,11 @@ void handle_friend_reply(Server* server, int client_fd, const bool accepted){
 
         server_send_udp_notification(server, requester, STREAM_FRIEND_ACC);
     }
-    else server_send_udp_notification(server, requester, STREAM_FRIEND_REJ);
+    else
+    {
+        server_send_udp_notification(server, requester, STREAM_FRIEND_REJ);
+
+    }
 
     target->pending_frie_req = false;
     target->pending_frie_id[0] = '\0';

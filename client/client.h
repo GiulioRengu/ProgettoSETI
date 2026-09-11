@@ -10,6 +10,8 @@ typedef struct {
     int tcp_fd;
     int udp_fd;
     bool auth;
+    bool pending_friend_reply; // EIRF> ricevuto, risposta ancora da inviare
+    bool awaiting_ackrf;       // risposta inviata, in attesa di ACKRF
 } Client;
 
 // inizializziamo il client (id/password vengono impostati in seguito con regis/conne)
