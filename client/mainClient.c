@@ -69,17 +69,17 @@ static int handle_stdin_line(Client *client)
     sscanf(line, "%15s", cmd);
     
     if (strcmp(cmd, "regis") == 0){
-        long pwd = -1;
+        char pwd_str[7] = {0};
         get_id(line, arg1);
-        printf("line: %s\n", line);
-        sscanf(line, "%*s %*s %ld", &pwd);
-        // if (sscanf(line, "%*s %8s %ld", arg1, &pwd) != 2){
-        //     printf("Uso: regis <id> <password>\n");
-        // }
-        if (net_is_valid_id(arg1) != 0){
+        if (sscanf(line, "%*s %*s %s", pwd_str) != 1){
+            printf("Uso: regis <id> <password>\n");
+        }
+        else if (net_is_valid_id(arg1) != 0){
             printf("Id non valido: deve essere alfanumerico ed esattamente di 8 caratteri.\n");
         }
-        else if (net_is_valid_password((int)pwd) != 0){
+        char *endptr;
+        long pwd = strtol(pwd_str, &endptr, 10);
+        if (*endptr != '\0' || net_is_valid_password((int)pwd) != 0){
             printf("Password non valida: deve essere compresa tra 0 e 65535.\n");
         }
         else{
