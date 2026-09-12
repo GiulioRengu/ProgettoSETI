@@ -1,5 +1,7 @@
 #include "net.h"
 
+int verbose = 0;
+
 /* ═══════════════════════════════════════════════════════════
  * SETUP SOCKET
  * ═══════════════════════════════════════════════════════════ */
@@ -12,14 +14,14 @@ int net_create_tcp_server(uint16_t port)
     fd=socket(AF_INET6, SOCK_STREAM, 0);
     if(fd<0)
     {
-        printf("Errore nella creazione del socket TCP | port %u Reason: %s", port, strerror(errno));
+        VERB("Errore nella creazione del socket TCP su porta %u, motivo: %s", port, strerror(errno));
         return -1;
     }
 
     int opt=1;
     if(setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt))<0)
     {
-        printf("Errore nella setsockopt SO_REUSEADDR | fd: %d, port: %u Reason: %s", fd, port, strerror(errno));
+        VERB("Errore nella setsockopt SO_REUSEADDR fd: %d, porta: %u. Motivo: %s", fd, port, strerror(errno));
         return -1;
     }
 
@@ -27,7 +29,7 @@ int net_create_tcp_server(uint16_t port)
     bool dual_stack=true;
     if(setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &v6only, sizeof(v6only))<0)
     {
-        printf("Supporto dual-stack non abilitato | fd: %d, port: %u Reason: %s",fd,port,strerror(errno));
+        VERB("Supporto dual-stack non abilitato su fd %d, porta: %u. Motivo: %s",fd,port,strerror(errno));
         dual_stack=false;
     }
 
@@ -38,19 +40,19 @@ int net_create_tcp_server(uint16_t port)
 
     if(bind(fd, (struct sockaddr *)&server_addr, sizeof(server_addr))<0)
     {
-        printf("Errore bind TCP | fd: %d, port: %u Reason: %s", fd, port, strerror(errno));
+        VERB("Errore bind TCP su fd: %d, porta: %u. Motivo: %s", fd, port, strerror(errno));
         close(fd);
         return -1;
     }
 
     if(listen(fd, SOMAXCONN)<0)
     {
-        printf("Errore listen TCP | fd: %d, port: %u Reason: %s", fd, port, strerror(errno));
+        VERB("Errore listen TCP su fd: %d, porta: %u. Motivo: %s", fd, port, strerror(errno));
         close(fd);
         return -1;
     }
 
-    printf("TCP server in ascolto | port: %u, protocol: %s", port, dual_stack ? "IPv4/IPv6" : "IPv6");
+    VERB("Server TCP in ascolto su porta %u con protocollo: %s", port, dual_stack ? "IPv4/IPv6" : "IPv6");
 
     return fd;
 }
@@ -64,7 +66,7 @@ int net_connect_tcp(const char *host, uint16_t port)
     fd=socket(AF_INET6, SOCK_STREAM, 0);
     if(fd<0)
     {
-        printf("Errore nella creazione del socket TCP | Port: %d Reason: %s", port, strerror(errno));
+        VERB("Errore nella creazione del socket TCP su porta: %d, motivo: %s", port, strerror(errno));
         close(fd);
         return -1;
     }
@@ -85,21 +87,21 @@ int net_connect_tcp(const char *host, uint16_t port)
     }
     if(ret==0)
     {
-        printf("Indirizzo invalido | host %s", host);
+        VERB("Indirizzo invalido, host %s", host);
         close(fd);
         return -1;
     }
 
     if(ret<0)
     {
-        printf("Errore pton Reason: %s", strerror(errno));
+        VERB("Errore pton, motivo: %s", strerror(errno));
         close(fd);
         return -1;
     }
 
     if(connect(fd, (struct sockaddr *)&server_addr, sizeof(server_addr))<0)
    {
-        printf("Errore connect | fd: %d, host: %s Reason %s", fd, host, strerror(errno));
+        VERB("Errore connect su fd: %d, host: %s. Motivo %s", fd, host, strerror(errno));
         close(fd);
         return -1;
    }
@@ -110,17 +112,16 @@ int net_connect_tcp(const char *host, uint16_t port)
 
 
 int net_create_udp_socket(uint16_t port){
-    //controllo porta prima della funzione oppure da inserire in funzione
     struct sockaddr_in6 server_addr;
     int sock = socket(AF_INET6, SOCK_DGRAM, 0);
     if (sock < 0){
-        printf("Errore net_create_udp_socket | port: %u Reason: %s", port,strerror(errno));
+        VERB("Errore creazione socket UDP su port: %u, motivo: %s", port,strerror(errno));
         return -1;
     }
 
     int f = 0, r = 0;
     if ((r = setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, &f, sizeof(f))) < 0){ //provo a modificare IPV6_V6ONLY a false per attivare il dual-stack
-        printf("Avviso net_create_udp_socket: Dual-Stack non attivo\n");
+        VERB("Avviso: Dual-Stack non attivo su porta %u", port);
         f = 1; //imposto f = 1 per ricordarmi che il dual stack non è attivo
     }
 
@@ -130,11 +131,12 @@ int net_create_udp_socket(uint16_t port){
     server_addr.sin6_port = htons(port);
 
     if((r = bind(sock, (struct sockaddr*) &server_addr, sizeof(server_addr))) < 0){
-        printf("Errore net_create_udp_socket: bind\n");
+        VERB("Errore nel bind del socket UDP su porta %u", port);
         close(sock);
         return -1;
     }
 
+    VERB("Socket UDP creato con successo su porta %u", port);
     return sock;
 }
 
@@ -149,7 +151,7 @@ int net_accept(int server_fd, char *ip_out, uint16_t *port_out){
 
     int new_fd = accept(server_fd, (struct sockaddr*) &saddr, &size);
     if (new_fd < 0){
-        printf("Errore net_accept: accept  Reason: %s\n", strerror(errno));
+        VERB("Errore accept, motivo: %s", strerror(errno));
         return -1;
     }
 
@@ -166,13 +168,13 @@ int net_accept(int server_fd, char *ip_out, uint16_t *port_out){
     }
 
     if (ntop_res == NULL){
-        printf("Errore net_accept: inet_ntop\n");
+        VERB("Errore inet_ntop");
         close(new_fd);
         return -1;
     }
 
-    printf("Accettata connessione a %s su fd %d\n", ip_out, server_fd);
     *port_out = ntohs(saddr.sin6_port);
+    VERB("Accettata connessione a %s su fd %d con porta %u", ip_out, server_fd, saddr.sin6_port);
     return new_fd;
 }
 
@@ -191,13 +193,13 @@ int net_recv_msg(int fd, char *buf, int bufsize){
         r = recv(fd, buf+received, 1, 0); //scrivo in posizione buf[received]
         if (r<0){
             // if(errno==EINTR) continue;
-            printf("Errore net_recv_msg: recv  Reason: %s\n", strerror(errno));
+            VERB("Errore ricezione messaggio, motivo: %s", strerror(errno));
             return -1;
         }
 
         if(r==0)
         {
-            printf("Client disconnesso\n");
+            VERB("Client disconnesso");
             return 0;
         }
 
@@ -238,12 +240,14 @@ int net_send(int fd, const char *buf, int len)
         b=send(fd, buf+bytes_sent, bytes_to_send, 0);
         if(b==-1)
         {
-            printf("Errore durante la send | fd: %d Reason: %s", fd, strerror(errno));
+            VERB("Errore durante la send su fd: %d, motivo: %s", fd, strerror(errno));
             return -1;
         }
         bytes_sent+=b;
         bytes_to_send-=b;
     }
+
+    //VERB("Messaggio inviato correttamente su fd %d", fd);
     return bytes_sent;
 }
 
@@ -257,7 +261,9 @@ int net_send_str(int fd, const char *buf)
  * INVIO UDP (notifiche server -> client)
  * ═══════════════════════════════════════════════════════════ */
 
-int net_send_udp(/*int udp_fd,*/ const User *target, StreamType type, int stream_count){ //forse da togliere udp_fd
+int net_send_udp(const User *target, StreamType type, int stream_count){
+    if (target == NULL) return -1;
+
     struct sockaddr_storage dest_addr; //creo indirizzo generico destinatario con sockaddr_storage
     socklen_t ip_len;                  // in modo da poter contenere sia eventuale ipv6 che ipv4
     memset(&dest_addr, 0, sizeof(dest_addr));
@@ -269,7 +275,7 @@ int net_send_udp(/*int udp_fd,*/ const User *target, StreamType type, int stream
         v6->sin6_port = htons(target->udp_port);
 
         if(inet_pton(AF_INET6, target->ip, &v6->sin6_addr) < 1){
-            printf("Errore net_send_udp | Reason: %s", strerror(errno));
+            VERB("Errore invio notifica udp a %s, motivo: %s", target->id, strerror(errno));
             return -1;
         }
         ip_len = sizeof(struct sockaddr_in6);
@@ -282,7 +288,7 @@ int net_send_udp(/*int udp_fd,*/ const User *target, StreamType type, int stream
         v4->sin_port = htons(target->udp_port);
         
         if(inet_pton(AF_INET, target->ip, &v4->sin_addr) < 1){
-            printf("Errore net_send_udp | Reason: %s", strerror(errno));
+            VERB("Errore invio notifica UDP a %s, motivo %s", target->id, strerror(errno));
             return -1;   
         }
         ip_len = sizeof(struct sockaddr_in);
@@ -290,7 +296,7 @@ int net_send_udp(/*int udp_fd,*/ const User *target, StreamType type, int stream
     }
 
     if (fd < 0){
-        printf("Errore net_send_udp  Reason: %s", strerror(errno));
+        VERB("Errore invio notifica UDP a %s, motivo %s", target->id, strerror(errno));
         return -1;
     }
 
@@ -298,12 +304,13 @@ int net_send_udp(/*int udp_fd,*/ const User *target, StreamType type, int stream
     build_udp_notif(tosend, type, stream_count);
     ssize_t sent = sendto(fd, tosend, 3, 0, (struct sockaddr*) &dest_addr, ip_len);
     if (sent != 3){
-        printf("Errore net_send_udp | Reason: %s", strerror(errno));
+        VERB("Errore invio notifica UDP a %s, motivo %s", target->id, strerror(errno));
         close(fd);
         return -1;
     }
     close(fd);
 
+    VERB("Notifica UDP di tipo [%s] inviata correttamente a %s", tosend, target->id);
     return 0;
 }
 

@@ -20,28 +20,6 @@ int has_delim(char* buff, int offset){
 }
 
 void parse(char *src, char* dest, int offset){
-    // if(src == NULL || dest == NULL) return;
-    // int len = strlen(src);
-
-    // if(offset >= len){
-    //     dest[0] = '\0';
-    //     return;
-    // }
-
-    // char* aux = src+offset;
-
-    // int delim_index = has_delim(src, offset);
-    // if(delim_index != -1){
-    //     // if ((size_t)delim_index != strlen(aux) - 3){
-    //     //     printf("Errore, delimitatore presente nel messaggio\n"); //lasciare o no?
-    //     //     return;
-    //     // }
-    //     int to_copy = delim_index - offset;
-    //     strncpy(dest, aux, to_copy);
-    //     dest[to_copy] = '\0';
-    // }
-
-    // else sscanf(aux, "%s", dest);
     if (src == NULL || dest == NULL || offset < 0) return;
 
     int len = strlen(src);

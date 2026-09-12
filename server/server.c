@@ -26,9 +26,8 @@ int server_init(Server *server, uint16_t port)
 
 void server_run(Server *server)
 {
-
+    VERB("Avvio Server");
     fd_set read_fds;
-
     while(1)
     {
         read_fds=server->master_fds;
@@ -49,15 +48,22 @@ void server_run(Server *server)
 }
 
 void server_accept_client(Server *server){
-    // if(server->client_count >= MAX_USERS){
-    //     printf("Errore server_accept_client: server->client_count >= MAX_USERS\n");
-    //     return;
-    // }
+    if(server->client_count >= MAX_USERS){
+        printf("Errore accettazione cliente: il server ha raggiunto la capienza massima di %d utenti\n", MAX_USERS);
+        return;
+    }
+
     char client_ip[INET6_ADDRSTRLEN];
     uint16_t client_tcp_port = 0;
     int client_fd = 0;
     if((client_fd = net_accept(server->tcp_fd, client_ip, &client_tcp_port)) < 0){
-        printf("Errore server_accept_client: net_accept ritorna -1\n");
+        VERB("Errore a: net_accept ritorna -1\n");
+        return;
+    }
+
+	if (client_fd >= FD_SETSIZE) {
+        VERB("Errore accettazione cliente: il server ha raggiunto il limite massimo di fd FD_SETSIZE");
+        close(client_fd);
         return;
     }
 
@@ -67,24 +73,20 @@ void server_accept_client(Server *server){
     }
 
     strncpy(server->pendingClients[client_fd], client_ip, INET6_ADDRSTRLEN);
+    VERB("Connessione accettata con successo su fd %d con ip %s", client_fd, client_ip);
 }
 
 void server_handle_client_msg(Server *server, int client_fd){
     char msg[MSG_BUFF_MAXSIZE];
     int r = net_recv_msg(client_fd, msg, MSG_BUFF_MAXSIZE);
-    // if(r==0){
-    //     //gestione errore
-    //     printf("Errore server_handle_client_msg: errore client disconensso");
-    //     return;
-    // }
     if (r == 0) {
-        printf("Errore server_handle_client_msg: client con fd %d disconnesso\n", client_fd);
+        VERB("Errore durante l'elaborazione del messaggio: client con fd %d disconnesso\n", client_fd);
         server_remove_client(server, client_fd);
         return;
     }
 
     if (r < 0) {
-        perror("Errore server_handle_client_msg: rete caduta durante net_recv_msg\n");
+        VERB("Errore: rete caduta durante net_recv_msg\n");
         server_remove_client(server, client_fd);
         return;
     }
@@ -104,7 +106,7 @@ void server_handle_client_msg(Server *server, int client_fd){
         case MSG_IQUIT:    handle_quit(server, client_fd); break;
 
         default:
-            printf("Errore server_handle_client_msg: tipo messaggio invalido/sconosciuto\n");
+            printf("Errore durante l'elaborazione del messaggio: tipo messaggio invalido/sconosciuto\n");
             return;
     }
 }
@@ -118,11 +120,7 @@ int is_port_available(uint16_t port, Server* server){
 
 User* get_user_by_id(Server *server, const char *id)
 {
-    if(server==NULL || server->client_count==0)
-    {
-        //printf("Nessun utente registrato nel server o nessun server disponibile\n");
-        return NULL;
-    }
+    if(server==NULL || server->client_count==0) return NULL;
     for(int i=0; i<server->client_count; i++)
     {
         if(strcmp(server->users[i].id, id) == 0)
@@ -130,17 +128,12 @@ User* get_user_by_id(Server *server, const char *id)
             return &server->users[i];
         }
     }
-    //printf("User %s non trovato", id);
     return NULL;
 }
 
 User* get_user_by_fd(Server *server, int fd)
 {
-    if(server==NULL || server->client_count==0)
-    {
-        printf("Nessun utente registrato nel server o nessun server disponibile\n");
-        return NULL;
-    }
+    if(server==NULL || server->client_count==0) return NULL;
     for(int i=0; i<MAX_USERS; i++)
     {
         if(server->users[i].tcp_fd==fd)
@@ -148,28 +141,17 @@ User* get_user_by_fd(Server *server, int fd)
             return &server->users[i];
         }
     }
-    printf("User %d non trovato\n", fd);
     return NULL;
 }
 
 // Invia una notifica UDP [YXX] al client
 int server_send_udp_notification(Server *server, User *user, StreamType type)
 {
-    if(server==NULL || user==NULL)
-    {
-        printf("Server o user null\n");
-        return -1;
-    }
-    if(net_send_udp(user, type, user->stream_count)<0)
-    {
-        printf("Problema a mandare UDP notif a %s\n",user->id);
-        return -1;
-    }
-
+    if(server==NULL || user==NULL) return -1;
+    if(net_send_udp(user, type, user->stream_count)<0) return -1;
     return 0;
 }
 
-//da controllare
 void server_disconnect(Server *server, int fd){
     for (int i = 0; i < server->client_count; i++){
         if (server->users[i].tcp_fd == fd){
@@ -200,6 +182,7 @@ void server_remove_client(Server* server, int client_fd)
 // Pulizia risorse server
 void server_cleanup(Server *server)
 {
+    VERB("Chiusura del server in corso");
     if(server==NULL) return;
 
     if(server->tcp_fd>=0) close(server->tcp_fd);

@@ -17,7 +17,7 @@ int are_friends(const User* first, const User* second){
     return found;
 }
 
-void handle_regis(Server* server, int client_fd, char* msg){ //serve fare disconnect quando fallisce?
+void handle_regis(Server* server, int client_fd, char* msg){
     if(server == NULL || client_fd < 0 || msg == NULL) return;
 
     char retmsg[9];
@@ -29,7 +29,7 @@ void handle_regis(Server* server, int client_fd, char* msg){ //serve fare discon
     uint16_t udp_port = (uint16_t)atoi(port);
 
     if (net_is_valid_port(udp_port) < 0 || is_port_available(udp_port, server) < 0){
-        printf("Errore handle_regis: port non valida o gia utilizzata da altro utente\n");
+        VERB("Errore REGIS di %s, la porta %u non e' valida o e' gia utilizzata", id, udp_port);
         build_gobye(retmsg);
         net_send_str(client_fd, retmsg);
         server_disconnect(server, client_fd);
@@ -40,7 +40,7 @@ void handle_regis(Server* server, int client_fd, char* msg){ //serve fare discon
 
     get_id(msg, id);
     if (net_is_valid_id(id) != 0){
-        printf("Errore handle_regis: id non valido\n");
+        VERB("Errore REGIS, id %s non valido", id);
         build_gobye(retmsg);
         net_send_str(client_fd, retmsg);
         server_disconnect(server, client_fd);
@@ -48,7 +48,7 @@ void handle_regis(Server* server, int client_fd, char* msg){ //serve fare discon
     }
 
     if (get_user_by_id(server, id) != NULL){
-        printf("Errore handle_regis: utente gia esistente\n");
+        VERB("Errore REGIS: l'utente %s e' gia esistente", id);
         build_gobye(retmsg);
         net_send_str(client_fd, retmsg);
         server_disconnect(server, client_fd);
@@ -56,7 +56,7 @@ void handle_regis(Server* server, int client_fd, char* msg){ //serve fare discon
     }
 
     if (server->client_count >= MAX_USERS){
-        printf("Errore handle_regis: server pieno\n");
+        VERB("Errore REGIS: il server ha raggiunto la capacita massima di utenti");
         build_gobye(retmsg);
         net_send_str(client_fd, retmsg);
         server_disconnect(server, client_fd);
@@ -94,7 +94,7 @@ void handle_regis(Server* server, int client_fd, char* msg){ //serve fare discon
     }
     else build_welco(retmsg);
 
-    printf("Utente %s registrato con ip %s, porta %s e fd %d\n", id, new_user.ip, port, client_fd);
+    VERB("Utente %s registrato correttamente con ip %s, porta %s e fd %d", id, new_user.ip, port, client_fd);
     net_send_str(client_fd, retmsg);
 }
 
@@ -108,7 +108,7 @@ void handle_conne(Server* server, int client_fd, char* msg){
     
     User* target = get_user_by_id(server, id);
     if (target == NULL){
-        printf("Errore handle_conne: utente %s non esistente\n", id);
+        VERB("Errore CONNE: utente %s non esistente", id);
         build_gobye(retmsg);
         net_send_str(client_fd, retmsg);
         server_disconnect(server, client_fd);
@@ -116,7 +116,7 @@ void handle_conne(Server* server, int client_fd, char* msg){
     }  
 
     if (target->password != password){
-        printf("Errore handle_conne: password per %s errata\n", id);
+        VERB("Errore CONNE: password per %s errata", target->id);
         build_gobye(retmsg);
         net_send_str(client_fd, retmsg);
         server_disconnect(server, client_fd);
@@ -124,7 +124,7 @@ void handle_conne(Server* server, int client_fd, char* msg){
     }
 
     if (target->connected == 0){
-        printf("Errore handle_conne: utente %s gia connesso\n", id);
+        VERB("Errore CONNE: utente %s gia connesso", target->id);
         build_gobye(retmsg);
         net_send_str(client_fd, retmsg);
         server_disconnect(server, client_fd);
@@ -138,7 +138,7 @@ void handle_conne(Server* server, int client_fd, char* msg){
 
     build_hello(retmsg);
     if(net_send_str(client_fd, retmsg) < 0){
-        printf("Errore handle_conne: errore invio HELLO+++\n");
+        VERB("Errore CONNE: errore durante l'invio di HELLO+++");
         server_disconnect(server, client_fd);
         return;
     }
@@ -150,11 +150,13 @@ void handle_conne(Server* server, int client_fd, char* msg){
         build_eirf(frie_reminder, target->pending_frie_id);
         if(net_send_str(client_fd, frie_reminder)<0)
         {
-            printf("Errore handle_conne: errore invio promemoria EIRF>\n");
+            VERB("Errore CONNE: errore invio promemoria EIRF>");
             server_disconnect(server, client_fd);
             return;
         }
     }
+
+    VERB("Utente %s connesso con successo", target->id);
 }
 
 void handle_frie(Server* server, int client_fd, char* msg){
@@ -167,23 +169,21 @@ void handle_frie(Server* server, int client_fd, char* msg){
     User* dest = get_user_by_id(server, dest_id);
 
     if (src == NULL || dest == NULL){
-        // if(src==NULL) printf("Mittente nullo %d\n", client_fd);
-        // if(dest==NULL) printf("Dest nullo %s \n", dest->id);
-        printf("Errore handle_frie: utente/i non esistenti\n");
+        VERB("Errore FRIE?: utente/i non esistenti");
         build_frie_ko(retmsg);
         if(net_send_str(client_fd, retmsg) < 0) server_disconnect(server, client_fd);
         return;
     }
 
     if (strcmp(src->id, dest->id) == 0){
-        printf("Errore handle_frie: sei gia amico di te stesso!\n");
+        VERB("Errore FRIE?: %s ha provato a inviare una richiesta di amicizia a se stesso", src->id);
         build_frie_ko(retmsg);
         if(net_send_str(client_fd, retmsg) < 0) server_disconnect(server, client_fd);
         return;
     }
 
     if (are_friends(src, dest) == 0){
-        printf("Errore handle_frie: sei gia amico di %s!\n", dest->id);
+        VERB("Errore FRIE?: %s e' gia amico di %s", src->id, dest->id);
         build_frie_ko(retmsg);
         if(net_send_str(client_fd, retmsg) < 0) server_disconnect(server, client_fd);
         return;
@@ -192,7 +192,7 @@ void handle_frie(Server* server, int client_fd, char* msg){
     Stream* aux = dest->streams;
     while(aux != NULL){
         if (strcmp(aux->from_id, src->id) == 0 && aux->type == STREAM_FRIEND_REQ){
-            printf("Errore handle_frie: hai gia mandato una richiesta di amicizia a %s!\n", dest->id);
+            VERB("Errore FRIE?: %s ha gia mandato una richiesta di amicizia a %s", src->id, dest->id);
             build_frie_ko(retmsg);
             if(net_send_str(client_fd, retmsg) < 0) server_disconnect(server, client_fd);
             return;
@@ -200,48 +200,26 @@ void handle_frie(Server* server, int client_fd, char* msg){
         aux = aux->next;
     }
 
-    // if (dest->stream_count >= MAX_STREAMS){
-    //     printf("Errore handle_frie: %s ha troppe richieste\n", dest->id);
-    //     build_frie_ko(retmsg);
-    //     if(net_send_str(client_fd, retmsg) < 0) server_disconnect(server, client_fd);
-    //     return;
-    // }
-
     if(stream_add(dest, src->id, NULL, STREAM_FRIEND_REQ)<0)
     {
-        printf("Errore invio amicizia da %s a %s", src->id, dest->id);
+        VERB("Errore FRIE?: la lista di flussi di %s e' piena", dest->id);
         build_frie_ko(retmsg);
         if(net_send_str(client_fd, retmsg) < 0) server_disconnect(server, client_fd);
         return;
     }
 
-    // Stream* new_stream = malloc(sizeof(Stream));
-    // new_stream->type = STREAM_FRIEND_REQ;
-    // strncpy(new_stream->from_id, src->id, ID_LENGTH+1);
-    // new_stream->next = NULL;
-
-    // if (dest->streams == NULL){
-    //     dest->streams = new_stream;
-    // } 
-    // else {
-    //     aux = dest->streams;
-    //     while (aux->next != NULL) aux = aux->next;
-    //     aux->next = new_stream;
-    // }
-    // dest->stream_count++;
-
     if(server_send_udp_notification(server, dest, STREAM_FRIEND_REQ) < 0){ //serve????? non credo...
-        printf("Errore handle_frie: invio notifica udp a %s non riuscito\n", dest->id);
+        VERB("Errore FRIE?: invio notifica udp a %s non riuscito", dest->id);
     }
 
     build_frie_ok(retmsg);
     if(net_send_str(client_fd, retmsg) < 0){
-        printf("Errore handle_frie: errore invio FRIE>+++\n");
+        VERB("Errore FRIE?: errore invio FRIE>+++");
         server_disconnect(server, client_fd);
         return;
     }
 
-    printf("Richiesta di amicizia da %s inviata correttamente a %s\n", src->id, dest->id);
+    VERB("Richiesta di amicizia da %s inviata correttamente a %s", src->id, dest->id);
 }
 
 void handle_mess(Server* server, int client_fd, char* msg){
@@ -255,7 +233,7 @@ void handle_mess(Server* server, int client_fd, char* msg){
     User* dest = get_user_by_id(server, dest_id);
 
     if (src == NULL || dest == NULL){
-        printf("Errore handle_mess: utente/i non esistenti\n");
+        VERB("Errore MESS?: utente/i non esistenti");
         build_mess_ko(retmsg);
         if(net_send_str(client_fd, retmsg) < 0) server_disconnect(server, client_fd);
         return;
@@ -265,7 +243,7 @@ void handle_mess(Server* server, int client_fd, char* msg){
     if (net_is_valid_msg(to_send) < 0){
         build_mess_ko(retmsg);
         if (net_send_str(client_fd, retmsg) < 0){
-            printf("Errore handle_mess: errore durante invio MESS<\n");
+            VERB("Errore MESS?: errore durante invio MESS<");
             server_disconnect(server, client_fd);
             return;
         }
@@ -274,21 +252,21 @@ void handle_mess(Server* server, int client_fd, char* msg){
 
     
     if (strcmp(src->id, dest->id) == 0){
-        printf("Errore handle_mess: non puoi inviare un messaggio a te stesso!\n");
+        VERB("Errore MESS?: %s ha provato a inviare un messaggio a se stesso", src->id);
         build_mess_ko(retmsg);
         if(net_send_str(client_fd, retmsg) < 0) server_disconnect(server, client_fd);
         return;
     }
 
     if (are_friends(src, dest) < 0){
-        printf("Errore handle_mess: non sei amico di %s!\n", dest->id);
+        VERB("Errore MESS?: %s non e' amico di %s", src->id, dest->id);
         build_mess_ko(retmsg);
         if(net_send_str(client_fd, retmsg) < 0) server_disconnect(server, client_fd);
         return;
     }
 
     if (stream_add(dest, src->id, to_send, STREAM_MSG) < 0){
-        printf("Errore handle_mess: lista stream di %s piena\n", dest->id);
+        VERB("Errore MESS?: lista stream di %s piena", dest->id);
         build_mess_ko(retmsg);
         if(net_send_str(client_fd, retmsg) < 0) server_disconnect(server, client_fd);
         return;
@@ -297,13 +275,12 @@ void handle_mess(Server* server, int client_fd, char* msg){
     server_send_udp_notification(server, dest, STREAM_MSG);
     build_mess_ok(retmsg);
     if(net_send_str(client_fd, retmsg) < 0) server_disconnect(server, client_fd);
-    printf("Messaggio da parte di %s inviato a %s\n", src->id, dest->id);
+    VERB("Messaggio da parte di %s a %s inviato con successo", src->id, dest->id);
     return;
 }
 
 void handle_floo(Server* server, int client_fd, char* msg)
 {
-    printf("%s\n", msg);
     if(server==NULL || client_fd<0 || msg==NULL)
     {
         return;
@@ -314,26 +291,22 @@ void handle_floo(Server* server, int client_fd, char* msg)
 
     User *sender=get_user_by_fd(server, client_fd);
     if(sender==NULL)return;
-    printf("msg prima del parse %s\n", msg);
 
-    get_msg(msg, to_send, 6); //[FLOO? ];
-
+    get_msg(msg, to_send, 6);
     if(net_is_valid_msg(to_send)<0)
     {
         build_floo_ok(retmsg); //??
-        printf("Errore Flood: msg non valido\n");
+        VERB("Errore FLOO?: messaggio di %s non valido", sender->id);
         if(net_send_str(client_fd, retmsg) < 0) server_disconnect(server, client_fd);
         return;
     }
 
-    printf("Inizio FLOO\n");
-    printf("to send : %s\n", to_send);
+    VERB("Inizio FLOO?");
     execute_flood_bfs(server, sender, to_send);
-    printf("to send : %s\n", to_send);
 
     build_floo_ok(retmsg);
     if(net_send_str(client_fd, retmsg) < 0) server_disconnect(server, client_fd);
-    printf("Messaggio FLOO partito da %s\n", sender->id);
+    VERB("Flood partito da %s completato con successo", sender->id);
     return;
 
 }
@@ -345,7 +318,7 @@ void handle_list(Server* server, int client_fd){
 
     build_rlist(u_id, server->client_count);
     if (net_send_str(client_fd, u_id) < 0){
-        printf("Errore handle_list: errore invio RLIST\n"); 
+        VERB("Errore LIST?: errore invio RLIST"); 
         server_disconnect(server, client_fd);
         return;
     }
@@ -353,32 +326,29 @@ void handle_list(Server* server, int client_fd){
     for (int i = 0; i<server->client_count; i++){
         build_linum(u_id, server->users[i].id);
         if (net_send_str(client_fd, u_id) < 0){
-            printf("Errore handle_list: errore invio LINUM, inviati %d\n", i);
+            VERB("Errore LIST?: errore invio LINUM, inviati %d", i);
             server_disconnect(server, client_fd);
             return;
         }
     }
 
-    printf("RLIST eseguito correttamente: inviata lista di %d utenti a %s\n", server->client_count, u->id);
+    VERB("RLIST eseguito correttamente: inviata lista di %d utenti a %s", server->client_count, u->id);
     return;
 }
 
 void handle_consu(Server* server, int client_fd){
-    if(server==NULL || client_fd<0)
-    {
-        return;
-    }
+    if(server==NULL || client_fd<0) return;
 
     User*user;
     if((user=get_user_by_fd(server, client_fd))==NULL)
     {
-        printf("Errore CONSU: Utente non trovato\n");
+        VERB("Errore CONSU: utente con fd %d non trovato", client_fd);
         return;
     }
 
     if(user->streams==NULL && !user->has_pending_stream)
     {
-        printf("Lista stream vuota\n");
+        VERB("Errore CONSU: %s non ha flussi da consultare", user->id);
         char retmsg[9];
         build_nocon(retmsg);
         if(net_send_str(client_fd, retmsg)<0) server_disconnect(server, client_fd);
@@ -395,7 +365,7 @@ void handle_consu(Server* server, int client_fd){
 
     if(current_stream==NULL)
     {
-        printf("Errore stream_remove\n");
+        VERB("Errore CONSU durante la rimozione del flusso di %s", user->id);
         return;
     }
 
@@ -407,7 +377,7 @@ void handle_consu(Server* server, int client_fd){
             build_eirf(retmsg, current_stream->from_id);
             if(net_send_str(client_fd, retmsg) < 0) 
             {
-                printf("Errore invio EIRF\n");
+                VERB("Errore CONSU durante l'invio di EIRF> a %s", user->id);
                 goto consu_fail;
             }
             user->pending_frie_req=true;
@@ -419,7 +389,7 @@ void handle_consu(Server* server, int client_fd){
             build_frien(retmsg, current_stream->from_id);
             if(net_send_str(client_fd, retmsg) < 0) 
             {
-                printf("Errore invio FRIEN\n");
+                VERB("Errore CONSU durante l'invio di FRIEN a %s", user->id);
                 goto consu_fail;
             }
             break;
@@ -428,7 +398,7 @@ void handle_consu(Server* server, int client_fd){
             build_nofri(retmsg, current_stream->from_id);
             if(net_send_str(client_fd, retmsg) < 0) 
             {
-                printf("Errore invio NOFRI\n");
+                VERB("Errore CONSU durante l'invio di NOFRI a %s", user->id);
                 goto consu_fail;
             }
             break;
@@ -437,7 +407,7 @@ void handle_consu(Server* server, int client_fd){
             build_ssem(retmsg, current_stream->from_id, current_stream->msg);
             if(net_send_str(client_fd, retmsg) < 0) 
             {
-                printf("Errore invio SSEM\n");
+                VERB("Errore CONSU durante l'invio di SSEM> a %s", user->id);
                 goto consu_fail;
             }
             break;
@@ -446,12 +416,13 @@ void handle_consu(Server* server, int client_fd){
             build_oolf(retmsg, current_stream->from_id, current_stream->msg);
             if(net_send_str(client_fd, retmsg) < 0) 
             {
-                printf("Errore invio OOLF\n");
+                VERB("Errore CONSU durante l'invio di OOLF> a %s", user->id);
                 goto consu_fail;
             }
             break;
+
         default:
-            printf("Errore CONSU: flusso sconosciuto\n");
+            VERB("Errore CONSU: tipo di flusso sconosciuto");
             free(current_stream);
             user->pending_stream = NULL;
             user->has_pending_stream = false;
@@ -459,16 +430,13 @@ void handle_consu(Server* server, int client_fd){
     }
 
     free(current_stream);
-    printf("CONSU SUCCESS\n");
+    VERB("Flusso di %s consultato correttamente", user->id);
     user->has_pending_stream = false;
     user->pending_stream = NULL;
     return;
 
     consu_fail:
         server_disconnect(server, client_fd);
-        // free(current_stream);
-        // user->pending_stream = NULL;
-        // user->has_pending_stream = false;
         return;
 }
 
@@ -477,19 +445,18 @@ void handle_friend_reply(Server* server, int client_fd, const bool accepted){
 
     User* target = get_user_by_fd(server, client_fd);
     if (target == NULL){
-        printf("Errore handle_friend_reply: Utente destinatario non trovato\n");
+        VERB("Errore accettazione amicizia: utente destinatario non trovato");
         return;
     }
-    //controllare se sono gia amici?
 
     if (!target->pending_frie_req || target->pending_frie_id[0] == '\0'){
-        printf("Errore handle_friend_reply: %s non ha richieste da accettare\n", target->id);
+        VERB("Errore accettazione amicizia: %s non ha richieste da accettare", target->id);
         goto fine;
     }
 
     User* requester = get_user_by_id(server, target->pending_frie_id);
     if (requester == NULL){
-        printf("Errore handle_friend_reply: Utente richiedente non trovato\n");
+        VERB("Errore accettazione amicizia: utente richiedente non trovato");
         goto fine;
     }
 
@@ -497,14 +464,14 @@ void handle_friend_reply(Server* server, int client_fd, const bool accepted){
     build_ackrf(retmsg);
     int r = stream_add(requester, target->id, NULL, (accepted ? STREAM_FRIEND_ACC : STREAM_FRIEND_REJ));
     if (r < 0){
-        printf("Errore handle_friend_reply: aggiunta stream a %s non riuscito\n", requester->id);
+        VERB("Errore accettazione amicizia: aggiunta stream a %s non riuscita", requester->id);
         goto fine;
  
     }
 
     if (accepted){
         if (target->friend_count >= MAX_USERS || requester->friend_count >= MAX_USERS){
-        printf("Errore handle_friend_reply: uno dei due utenti ha la lista amici piena\n");
+        VERB("Errore accettazione amicizia: uno dei due utenti ha la lista amici piena");
         goto fine;
         }
 
@@ -531,15 +498,14 @@ void handle_friend_reply(Server* server, int client_fd, const bool accepted){
     target->pending_frie_req = false;
     target->pending_frie_id[0] = '\0';
     target->has_pending_stream = false;
-    goto fine;
 
     fine:
     if (net_send_str(client_fd, retmsg) < 0){
-        printf("Errore handle_friend_reply: invio ACKRF a %s non riuscito\n", target->id);
+        VERB("Errore accettazione amicizia: invio ACKRF a %s non riuscito", target->id);
         server_disconnect(server, client_fd);
         return;
     }
-
+    else VERB("Richiesta di amicizia da parte di %s a %s gestita correttamente", requester->id, target->id);
 
 }
 
@@ -551,4 +517,5 @@ void handle_quit(Server* server, int client_fd){
     build_gobye(retmsg);
     net_send_str(client_fd, retmsg);
     server_disconnect(server, client_fd);
+    VERB("Utente %s disconnesso correttamente", u->id);
 }

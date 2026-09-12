@@ -74,4 +74,9 @@ typedef struct Server{
     char pendingClients[FD_SETSIZE][INET6_ADDRSTRLEN]; //array contente l'ip dei clienti che non si sono ancora registrati
 } Server;
 
+extern int verbose;
+
+#define VERB(str, ...) \
+    do{ if (verbose) fprintf(stderr, "[VERBOSE] " str "\n", ##__VA_ARGS__); }while(0)
+
 #endif

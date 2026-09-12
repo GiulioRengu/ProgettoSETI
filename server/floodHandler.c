@@ -19,11 +19,8 @@ void execute_flood_bfs(Server* server, User* sender, const char* mess)
     int head=0, tail=0;
 
     int sender_index=get_user_index(server, sender->id);
-    if(sender_index<0)
-    {
-        printf("Erroree\n");
-        return;
-    }
+    if(sender_index<0) return;
+
     visited[sender_index]=true;
 
     queue[tail++]=sender;
@@ -47,7 +44,7 @@ void execute_flood_bfs(Server* server, User* sender, const char* mess)
                     if (stream_add(friend_ptr, sender->id, mess, STREAM_FLOO)==0)
                     {
                         server_send_udp_notification(server, friend_ptr, STREAM_FLOO);
-                        printf("Flood propagato da %s a %s\n", sender->id, friend_ptr->id);
+                        VERB("Flood propagato da %s a %s\n", sender->id, friend_ptr->id);
                     }
                 }
             }

@@ -24,6 +24,7 @@ int stream_add(User *user, const char *from_id, const char *msg, StreamType type
         tmp->next=new_stream;
         user->stream_count++;
     }
+    VERB("Flusso aggiunto correttamente alla lista di %s", user->id);
     return 0;
 }
 
@@ -37,6 +38,7 @@ Stream *stream_remove(User *user)
     user->streams=user->streams->next;
     user->stream_count--;
 
+    VERB("Flusso rimosso correttamente alla lista di %s", user->id);
     return tmp;
 }
 

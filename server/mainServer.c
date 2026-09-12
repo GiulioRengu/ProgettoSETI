@@ -9,7 +9,7 @@ static Server *global_server = NULL;
 
 void handle_sigint(int sig) {
     (void)sig;
-    printf("\nRicevuto SIGINT (Ctrl+C). Chiusura del server in corso...\n");
+    printf("\nRicevuto SIGINT (Ctrl+C). Chiusura del server in corso\n");
     if (global_server != NULL) {
         server_cleanup(global_server);
     }
@@ -19,10 +19,13 @@ void handle_sigint(int sig) {
 
 int main(int argc, char *argv[]) 
 {
-    if (argc != 2){
-        printf("Errore argomenti\nUsage: %s <porta-server>\n", argv[0]);
+    if (argc < 2){
+        printf("Errore argomenti\nUsage: %s <porta-server>  <flag -v per attivare verbosa>\n", argv[0]);
         exit(EXIT_FAILURE);
     }
+
+    if(argc == 3 && strncmp(argv[2], "-v", 2) == 0) verbose = 1;
+
     int port = atoi(argv[1]);
     if (port < 0 || port > 9999){
         printf("Errore, la porta deve essere compresa tra 0 e 9999\n");
@@ -49,7 +52,7 @@ int main(int argc, char *argv[])
         printf("Errore init server\n");
         return EXIT_FAILURE;
     }
-    printf("Server ON, port: %u\n", port);
+    VERB("Server attivo su porta: %u\n", port);
     server_run(&server);
     server_cleanup(&server);
 
