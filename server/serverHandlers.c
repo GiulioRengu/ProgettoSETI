@@ -25,6 +25,7 @@ void handle_regis(Server* server, int client_fd, char* msg){
     char id[ID_LENGTH+1];
     char port[5];
 	get_port(msg, port, 15);
+    get_id(msg, id);
 
     uint16_t udp_port = (uint16_t)atoi(port);
 
@@ -38,7 +39,6 @@ void handle_regis(Server* server, int client_fd, char* msg){
 
     uint16_t password = (unsigned char)msg[20] | ((unsigned char)msg[21] << 8);
 
-    get_id(msg, id);
     if (net_is_valid_id(id) != 0){
         VERB("Errore REGIS, id %s non valido", id);
         build_gobye(retmsg);

@@ -174,7 +174,7 @@ int net_accept(int server_fd, char *ip_out, uint16_t *port_out){
     }
 
     *port_out = ntohs(saddr.sin6_port);
-    VERB("Accettata connessione a %s su fd %d con porta %u", ip_out, server_fd, saddr.sin6_port);
+    VERB("Accettata connessione a %s su fd %d", ip_out, server_fd);
     return new_fd;
 }
 
@@ -247,7 +247,7 @@ int net_send(int fd, const char *buf, int len)
         bytes_to_send-=b;
     }
 
-    //VERB("Messaggio inviato correttamente su fd %d", fd);
+    VERB("Messaggio %s inviato correttamente su fd %d", buf, fd);
     return bytes_sent;
 }
 
