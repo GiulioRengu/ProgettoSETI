@@ -144,7 +144,7 @@ void handle_conne(Server* server, int client_fd, char* msg){
         return;
     }
 
-    // Il nuovo client deve ricevere di nuovo la richiesta ancora senza risposta.
+    //Il nuovo client deve ricevere di nuovo la richiesta ancora senza risposta.
     if(target->pending_frie_req && target->pending_frie_id[0]!='\0')
     {
         char frie_reminder[6 +ID_LENGTH+3+1]; //eirf> id +++\0

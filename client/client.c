@@ -191,10 +191,6 @@ void client_handle_server_message(Client *client, const char *buf, int len)
     else if(len==8 && memcmp(buf, "ACKRF+++", 8)==0){
         client->awaiting_ackrf=false;
     }
-    // else if(len==8 && memcmp(buf, "GOBYE+++", 8)==0){
-    //     client->pending_friend_reply=false;
-    //     client->awaiting_ackrf=false;
-    // }
 }
 
 void client_run(Client *client)

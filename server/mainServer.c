@@ -20,7 +20,7 @@ void handle_sigint(int sig) {
 int main(int argc, char *argv[]) 
 {
     if (argc < 2){
-        printf("Errore argomenti\nUsage: %s <porta-server>  <flag -v per attivare verbosa>\n", argv[0]);
+        printf("Uso: %s <porta-server>  <flag -v opzionale>\n", argv[0]);
         exit(EXIT_FAILURE);
     }
 

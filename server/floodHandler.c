@@ -22,9 +22,7 @@ void execute_flood_bfs(Server* server, User* sender, const char* mess)
     if(sender_index<0) return;
 
     visited[sender_index]=true;
-
     queue[tail++]=sender;
-
     while(head<tail)
     {
         User *current_user=queue[head++];

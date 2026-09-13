@@ -144,7 +144,6 @@ User* get_user_by_fd(Server *server, int fd)
     return NULL;
 }
 
-// Invia una notifica UDP [YXX] al client
 int server_send_udp_notification(Server *server, User *user, StreamType type)
 {
     if(server==NULL || user==NULL) return -1;

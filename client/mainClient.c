@@ -16,18 +16,10 @@ void handle_sigint(int sig)
     exit(0);
 }
 
-void print_usage(const char *prog)
-{
-    fprintf(stderr, "Uso: %s <server_ip> <server_port> <porta_udp>\n", prog);
-    fprintf(stderr, "server_ip    indirizzo IP (IPv4 o IPv6) del server\n");
-    fprintf(stderr, "server_port  porta TCP del server (< 9999)\n");
-    fprintf(stderr, "porta_udp    porta UDP locale su cui ricevere le notifiche (< 9999)\n");
-}
-
 int main(int argc, char *argv[])
 {
     if (argc < 4){
-        print_usage(argv[0]);
+        printf("Uso: %s <server-ip> <server-port> <udp-port> <flag -v opzionale>\n", argv[0]);
         return EXIT_FAILURE;
     }
     if (argc == 5 && strcmp(argv[4], "-v") == 0) verbose = 1;
@@ -37,12 +29,12 @@ int main(int argc, char *argv[])
     long udp_port_l = strtol(argv[3], NULL, 10);
 
     if (net_is_valid_port((uint16_t)server_port_l) != 0){
-        fprintf(stderr, "Errore: porta del server non valida (deve essere compresa tra 1 e 9999).\n");
+        fprintf(stderr, "Errore: porta del server non valida (deve essere compresa tra 1 e 9999)\n");
         return EXIT_FAILURE;
     }
 
     if (net_is_valid_port((uint16_t)udp_port_l) != 0){
-        fprintf(stderr, "Errore: porta UDP non valida (deve essere compresa tra 1 e 9999).\n");
+        fprintf(stderr, "Errore: porta UDP non valida (deve essere compresa tra 1 e 9999)\n");
         return EXIT_FAILURE;
     }
 
@@ -59,18 +51,17 @@ int main(int argc, char *argv[])
     }
 
     if (client_start(&client, (uint16_t)udp_port_l) != 0){
-        fprintf(stderr, "Errore: impossibile avviare il client.\n");
+        fprintf(stderr, "Errore: impossibile avviare il client\n");
         return EXIT_FAILURE;
     }
 
     if (client_connect(&client, server_ip, (uint16_t)server_port_l) != 0){
-        fprintf(stderr, "Errore: impossibile connettersi al server %s:%ld.\n", server_ip, server_port_l);
+        fprintf(stderr, "Errore: impossibile connettersi al server con ip %s e porta %lu\n", server_ip, server_port_l);
         client_cleanup(&client);
         return EXIT_FAILURE;
     }
 
-    printf("Connesso al server %s:%ld (porta UDP locale: %ld). Usa 'regis' o 'conne' per autenticarti.\n",
-            server_ip, server_port_l, udp_port_l);
+    VERB("Connessione effettuata con successo sul server con ip %s, porta  tcp %lu e porta udp %lu\n", server_ip, server_port_l, udp_port_l);
 
     client_run(&client);
     client_cleanup(&client);

@@ -6,27 +6,16 @@
 #include "../server_client/net.h"
 #include "server.h"
 
-/**
- * Adding a stream to user->streams linked list;
- * Fails if user is NULL or from_id is NULL or MAX_STREAMS of user is reached
- * 
- * @return 0 success,
- * @return -1 failure.
- */
+//Aggiunge un flusso alla lista di flussi di user
+//Ritorna 0 se aggiunge il flusso correttamente, -1 se la lista flussi e' piena o non completata correttamente
 int stream_add(User *user, const char *from_id, const char *msg, StreamType type);
 
-/**
- * Removes the oldest Stream in the streams linked list
- * Fails when list is empty
- * 
- */
+//Rimuove il flusso in testa dalla lista di flussi di user e lo ritorna
+//Ritorna NULL in caso di errore o se non ci sono flussi da rimuovere 
 Stream *stream_remove(User *user);
 
-/**
- * self explanatory
- * @return 0 success,
- * @return -1 failure.
- */
+//Controlla se la lista di flussi di user e' vuota
+//Ritorna user->stream_count <= 0
 int is_stream_empty(User *user);
 
 #endif
