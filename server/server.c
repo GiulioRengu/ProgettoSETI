@@ -33,7 +33,7 @@ void server_run(Server *server)
         read_fds=server->master_fds;
         if(select(server->fdmax+1, &read_fds, NULL, NULL, NULL)==-1)
         {
-            printf("Errore select | Reason: %s\n", strerror(errno));
+            VERB("Errore select, motivo: %s", strerror(errno));
             break;
         }
         for(int i=0; i<=server->fdmax; i++) //cicliamo tutti i fd
@@ -49,7 +49,7 @@ void server_run(Server *server)
 
 void server_accept_client(Server *server){
     if(server->client_count >= MAX_USERS){
-        printf("Errore accettazione cliente: il server ha raggiunto la capienza massima di %d utenti\n", MAX_USERS);
+        printf("Errore accettazione cliente: il server ha raggiunto la capienza massima di %d utenti", MAX_USERS);
         return;
     }
 
@@ -80,13 +80,13 @@ void server_handle_client_msg(Server *server, int client_fd){
     char msg[MSG_BUFF_MAXSIZE];
     int r = net_recv_msg(client_fd, msg, MSG_BUFF_MAXSIZE);
     if (r == 0) {
-        VERB("Errore durante l'elaborazione del messaggio: client con fd %d disconnesso\n", client_fd);
+        VERB("Errore durante l'elaborazione del messaggio: client con fd %d disconnesso", client_fd);
         server_remove_client(server, client_fd);
         return;
     }
 
     if (r < 0) {
-        VERB("Errore: rete caduta durante net_recv_msg\n");
+        VERB("Errore: rete caduta durante net_recv_msg");
         server_remove_client(server, client_fd);
         return;
     }
@@ -106,7 +106,7 @@ void server_handle_client_msg(Server *server, int client_fd){
         case MSG_IQUIT:    handle_quit(server, client_fd); break;
 
         default:
-            printf("Errore durante l'elaborazione del messaggio: tipo messaggio invalido/sconosciuto\n");
+            printf("Errore durante l'elaborazione del messaggio: tipo messaggio invalido/sconosciuto");
             return;
     }
 }

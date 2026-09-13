@@ -114,6 +114,14 @@ void handle_conne(Server* server, int client_fd, char* msg){
         server_disconnect(server, client_fd);
         return;
     }  
+    
+    if (target->connected == 0){
+        VERB("Errore CONNE: utente %s gia connesso", target->id);
+        build_gobye(retmsg);
+        net_send_str(client_fd, retmsg);
+        server_disconnect(server, client_fd);
+        return;
+    }
 
     if (target->password != password){
         VERB("Errore CONNE: password per %s errata", target->id);
@@ -123,13 +131,6 @@ void handle_conne(Server* server, int client_fd, char* msg){
         return;
     }
 
-    if (target->connected == 0){
-        VERB("Errore CONNE: utente %s gia connesso", target->id);
-        build_gobye(retmsg);
-        net_send_str(client_fd, retmsg);
-        server_disconnect(server, client_fd);
-        return;
-    }
 
     target->tcp_fd = client_fd;
     target->connected = 0;
@@ -291,6 +292,13 @@ void handle_floo(Server* server, int client_fd, char* msg)
 
     User *sender=get_user_by_fd(server, client_fd);
     if(sender==NULL)return;
+
+    if (sender->friend_count == 0){
+        VERB("%s non ha amici su cui propagare la flood", sender->id);
+        build_floo_ok(retmsg);
+        if(net_send_str(client_fd, retmsg) < 0) server_disconnect(server, client_fd);
+        return;
+    }
 
     get_msg(msg, to_send, 6);
     if(net_is_valid_msg(to_send)<0)

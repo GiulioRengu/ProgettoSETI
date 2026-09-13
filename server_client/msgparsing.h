@@ -2,14 +2,7 @@
 #define MSGPARSING_H
 #include "protocol.h"
 
-/**
- * messaggio:
- * read type + data extraction
- */
-
-
 typedef enum {
-    /* client → server */
     MSG_REGIS,          /* REGIS id port mdp+++ */
     MSG_CONNE,          /* CONNE id mdp+++      */
     MSG_FRIE_REQ,       /* FRIE? id+++          */
@@ -20,7 +13,7 @@ typedef enum {
     MSG_OKIRF,          /* OKIRF+++             */
     MSG_NOKRF,          /* NOKRF+++             */
     MSG_IQUIT,          /* IQUIT+++             */
-    /* server → client */
+
     MSG_WELCO,          /* WELCO+++             */
     MSG_GOBYE,          /* GOBYE+++             */
     MSG_HELLO,          /* HELLO+++             */
@@ -38,38 +31,37 @@ typedef enum {
     MSG_FRIEN,          /* FRIEN id+++          */
     MSG_NOFRI,          /* NOFRI id+++          */
     MSG_NOCON,          /* NOCON+++             */
-
 } MsgType;
 
-/**
-* controlla se la stringa ha delim +++, se lo ha restituisce il suo indice, altrimenti 0.
-*/
+
+//controlla se la stringa ha delimitatore +++, se lo ha restituisce il suo indice, altrimenti -1
 int has_delim(char* buff, int offset);
 
+//Legge un token da src(+offset) finche non trova uno spazio o +++ e mette il risultato in dest
 void parse(char *src, char* dest, int offset);
 
+//Estrae un messaggio da src e lo mette in dest. Diversa da parse perche non si deve fermare se incontra spazi
 void extract_msg(char* src, char* dest, int offset);
 
+//Ritorna il tipo del messaggio oppure -1 in caso di errore
 int get_type(char* buff);
-// offset=6 (type + space)
+
+//Chiama parse per estrarre l'id dal messaggio (offset=6)
 void get_id(char* buff, char* id);
-// offset=15 (type + id + port + spaces)
+
+//Chiama parse per estrarre la porta dal messaggio (offset variabile)
 void get_port(char* buff, char* port, int offset);
-// offset dipende
+
+//Chiama extract_msg per estrarre il messaggio da inviare (offset variabile)
 void get_msg(char*buff, char* msg, int offset);
 
-// primi 5 byte del messaggio, per capire di che tipo è
-
-/*------------------------
-*builder client to server
--------------------------*/
 
 //[REGIS id port password]
-// Ritorna la lunghezza in byte, escluso il NUL finale (password binaria).
+// Ritorna la lunghezza in byte, escluso il NULL finale
 int build_regis(char *buff, const char *id, uint16_t port, uint16_t password);
 
 //[CONNE id password]
-// Ritorna la lunghezza in byte, escluso il NUL finale (password binaria).
+// Ritorna la lunghezza in byte, escluso il NULL finale
 int build_conne(char *buff, const char *id, uint16_t password);
 
 // [FRIE? id]
@@ -96,10 +88,6 @@ void build_nokrf(char *buff);
 // [IQUIT]
 void build_iquit(char *buff);
 
-/*------------------------
-*builder server to client
--------------------------*/
-
 // [WELCO]
 void build_welco(char *buff);
 
@@ -124,7 +112,7 @@ void build_mess_ko(char *buff);
 // [FLOO>]
 void build_floo_ok(char *buff);
 
-// [RLIST num-item] //num item è int così uso %03d
+// [RLIST num-item] num item è int così uso %03d
 void build_rlist(char *buff, int num_item);
 
 // [LINUM id]
@@ -151,12 +139,7 @@ void build_nofri(char *buff, const char *id);
 // [NOCON]
 void build_nocon(char *buff);
 
-
-/* ==========================================================================
-* BUILDER: NOTIFICHE UDP
-* ========================================================================== */
-
-// [YXX]
+//Costruisce una notifica udp [YXX] con Y = type e XX = stream_count
 void build_udp_notif(char *buff, StreamType type, int stream_count);
 
 #endif

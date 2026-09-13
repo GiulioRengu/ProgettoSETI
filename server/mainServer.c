@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
         printf("Errore init server\n");
         return EXIT_FAILURE;
     }
-    VERB("Server attivo su porta: %u\n", port);
+    VERB("Server attivo su porta: %u", port);
     server_run(&server);
     server_cleanup(&server);
 

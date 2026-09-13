@@ -14,19 +14,31 @@ typedef struct {
     bool awaiting_ackrf;       // risposta inviata, in attesa di ACKRF
 } Client;
 
-// inizializziamo il client (id/password vengono impostati in seguito con regis/conne)
+//Stampa il menu principale
+void print_menu();
+
+//Inizializzazione client (id/password vengono impostati in seguito con regis/conne)
 int client_start(Client *client, uint16_t udp_port);
 
-// connessione TCP al server
+//Connessione TCP al server
 int client_connect(Client *client, const char* server_ip, uint16_t server_port);
 
-// Loop principale del client (gestisce stdin, TCP e UDP)
+//Gestisce comando di autenticazione (conne/regis)
+void client_handle_auth_command(Client *client, const char *line, bool registration);
+
+//Gestisce una linea di input del cliente
+int client_handle_stdin_line(Client *client);
+
+//Gestisce un messaggio EIRF> ricevuto dal server
+void client_handle_server_message(Client *client, const char *buf, int len);
+
+//Loop principale del client (gestisce stdin, TCP e UDP)
 void client_run(Client *client);
 
-// disconnessione
+//Disconnessione
 void client_cleanup(Client *client);
 
-// IQUIT+++
+//IQUIT+++
 void client_disconnect(Client *client);
 
 #endif

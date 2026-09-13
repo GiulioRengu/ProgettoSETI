@@ -1,10 +1,6 @@
 #include "net.h"
 
-int verbose = 0;
-
-/* ═══════════════════════════════════════════════════════════
- * SETUP SOCKET
- * ═══════════════════════════════════════════════════════════ */
+int verbose = 0; //net.h utilizzato sia da mainClient che mainServer
 
 int net_create_tcp_server(uint16_t port)
 {
@@ -56,7 +52,6 @@ int net_create_tcp_server(uint16_t port)
 
     return fd;
 }
-
 
 int net_connect_tcp(const char *host, uint16_t port)
 {
@@ -110,7 +105,6 @@ int net_connect_tcp(const char *host, uint16_t port)
 
 }
 
-
 int net_create_udp_socket(uint16_t port){
     struct sockaddr_in6 server_addr;
     int sock = socket(AF_INET6, SOCK_DGRAM, 0);
@@ -125,7 +119,7 @@ int net_create_udp_socket(uint16_t port){
         f = 1; //imposto f = 1 per ricordarmi che il dual stack non è attivo
     }
 
-    memset(&server_addr, 0, sizeof(server_addr)); //imposto tutti i byte a 0
+    memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin6_addr = in6addr_any;
     server_addr.sin6_family = AF_INET6;
     server_addr.sin6_port = htons(port);
@@ -140,11 +134,6 @@ int net_create_udp_socket(uint16_t port){
     return sock;
 }
 
-
-/* ═══════════════════════════════════════════════════════════
- * ACCETTAZIONE CONNESSIONI (server)
- * ═══════════════════════════════════════════════════════════ */
-
 int net_accept(int server_fd, char *ip_out, uint16_t *port_out){
     struct sockaddr_in6 saddr;
     socklen_t size = sizeof(struct sockaddr_in6);
@@ -157,7 +146,7 @@ int net_accept(int server_fd, char *ip_out, uint16_t *port_out){
 
     const char* ntop_res;
     if(IN6_IS_ADDR_V4MAPPED(&saddr.sin6_addr)){ //controlla se indirizzo ip è mappato ipv4 o ipv6
-        // se ipv4 estraggo ultimi 4 byte di saddr.sin6_addr
+                                                // se ipv4 estraggo ultimi 4 byte di saddr.sin6_addr
         struct in_addr v4_addr;
         memcpy(&v4_addr, &saddr.sin6_addr.s6_addr[12], 4); //copio ultimi 4 byte da [12] a [15] in v4_addr
         ntop_res = inet_ntop(AF_INET, &v4_addr, ip_out, INET_ADDRSTRLEN);
@@ -178,11 +167,6 @@ int net_accept(int server_fd, char *ip_out, uint16_t *port_out){
     return new_fd;
 }
 
-
-/* ═══════════════════════════════════════════════════════════
- * RICEZIONE TCP
- * ═══════════════════════════════════════════════════════════ */
-
 int net_recv_msg(int fd, char *buf, int bufsize){
     if (buf == NULL || bufsize <= 0) return -1;
     int plus_count = 0, received = 0;
@@ -192,7 +176,6 @@ int net_recv_msg(int fd, char *buf, int bufsize){
     while(received < bufsize-1){
         r = recv(fd, buf+received, 1, 0); //scrivo in posizione buf[received]
         if (r<0){
-            // if(errno==EINTR) continue;
             VERB("Errore ricezione messaggio, motivo: %s", strerror(errno));
             return -1;
         }
@@ -210,9 +193,8 @@ int net_recv_msg(int fd, char *buf, int bufsize){
         }
         
         //fix conteggio ++ nella password
-        // I due byte della password possono contenere anche '+' e NUL.
-        if (password_offset >= 0 && received > password_offset &&
-            received <= password_offset + 2){
+        //i due byte della password possono contenere anche '+' e NUL.
+        if (password_offset >= 0 && received > password_offset && received <= password_offset + 2){
             plus_count = 0;
             continue;
         }
@@ -226,11 +208,6 @@ int net_recv_msg(int fd, char *buf, int bufsize){
     buf[received] = '\0';
     return received;
 }
-
-
-/* ═══════════════════════════════════════════════════════════
- * INVIO TCP
- * ═══════════════════════════════════════════════════════════ */
 
 int net_send(int fd, const char *buf, int len)
 {
@@ -251,15 +228,10 @@ int net_send(int fd, const char *buf, int len)
     return bytes_sent;
 }
 
-
 int net_send_str(int fd, const char *buf)
 {
     return net_send(fd, buf, strlen(buf));
 }
-
-/* ═══════════════════════════════════════════════════════════
- * INVIO UDP (notifiche server -> client)
- * ═══════════════════════════════════════════════════════════ */
 
 int net_send_udp(const User *target, StreamType type, int stream_count){
     if (target == NULL) return -1;
@@ -314,41 +286,20 @@ int net_send_udp(const User *target, StreamType type, int stream_count){
     return 0;
 }
 
-/* ═══════════════════════════════════════════════════════════
- * CONTROLLI
- * ═══════════════════════════════════════════════════════════ */
-
-/**
- * @retval 0 va bene
- * @retval -1 id troppo lungo (max 8 char)
- * @retval 1 id contiene caratteri non alfanumerici
- */
 int net_is_valid_id(const char *msg){
     if (strlen(msg) != 8) return -1;
-    for(unsigned i = 0; i<8; i++) if (!isalnum(msg[i])) return 1;
+    for(unsigned i = 0; i<8; i++) if (!isalnum(msg[i])) return -1;
     return 0;
 }
 
-/**
- * @retval 0 va bene
- * @retval -1 non va bene
- */
-int net_is_valid_port(const long port){ //long perchè così controllo veramente se port>9999
+int net_is_valid_port(const long port){
     return (port>0 && port<=9999) ? 0 : -1;
 }
 
-/**
- * @retval 0 va bene
- * @retval -1 non va bene
- */
-int net_is_valid_password(const long pwd){ //come per is_valid_port
+int net_is_valid_password(const long pwd){
     return (pwd>=0 && pwd<=65535) ? 0 : -1;
 }
 
-/**
- * @retval messaggio NULL, troppo lungo o contenente '+++'
- * @retval 0 ha già il terminatore
- */
 int net_is_valid_msg(const char *msg){
     if (msg == NULL || strlen(msg) > MSG_LENGTH_MAX || strstr(msg, "+++") != NULL) return -1;
     return 0;

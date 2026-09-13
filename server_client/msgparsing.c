@@ -1,10 +1,5 @@
 #include "msgparsing.h"
 
-
-/*------------------------
-*   parsing of messages
--------------------------*/
-
 int has_delim(char* buff, int offset){
     int plus_count = 0;
     int max_len = strlen(buff);
@@ -71,15 +66,12 @@ void extract_msg(char* src, char* dest, int offset){
     }
 
     if (end == -1){
-        /* nessun terminatore "+++" trovato -> messaggio malformato */
         dest[0] = '\0';
         return;
     }
 
     int msg_len = end - offset;
     if (msg_len > MSG_LENGTH_MAX){
-        /* troppo lungo: lo rifiuto invece di troncarlo silenziosamente,
-         * cosi' un messaggio malformato non viene "corretto" di nascosto */
         dest[0] = '\0';
         return;
     }
@@ -134,11 +126,6 @@ void get_msg(char*buff, char* msg, int offset){
     extract_msg(buff, msg, offset);
 }
 
-/*------------------------
-*builder client to server
--------------------------*/
-
-//[REGIS id port password]
 int build_regis(char *buff, const char *id, uint16_t port, uint16_t password)
 {
     int offset = sprintf(buff, "REGIS %s %04u ", id, port);
@@ -149,7 +136,7 @@ int build_regis(char *buff, const char *id, uint16_t port, uint16_t password)
     return offset + 3;
 }
 
-//[CONNE id password]
+
 int build_conne(char *buff, const char *id, uint16_t password)
 {
     int offset = sprintf(buff, "CONNE %s ", id);
@@ -160,90 +147,56 @@ int build_conne(char *buff, const char *id, uint16_t password)
     return offset + 3;
 }
 
-// [FRIE? id]
 void build_frie_req(char *buff, const char *id) { sprintf(buff, "FRIE? %s+++", id); }
 
-// [MESS? id mess]
 void build_mess_req(char *buff, const char *id, const char *mess) { sprintf(buff, "MESS? %s %s+++", id, mess); }
 
-// [FLOO? mess]
 void build_floo_req(char *buff, const char *mess) { sprintf(buff, "FLOO? %s+++", mess); }
 
-// [LIST?]
 void build_list_req(char *buff) { strcpy(buff, "LIST?+++"); }
 
-// [CONSU]
 void build_consu(char *buff) { strcpy(buff, "CONSU+++"); }
 
-// [OKIRF]
 void build_okirf(char *buff) { strcpy(buff, "OKIRF+++"); }
 
-// [NOKRF]
 void build_nokrf(char *buff) { strcpy(buff, "NOKRF+++"); }
 
-// [IQUIT]
 void build_iquit(char *buff) { strcpy(buff, "IQUIT+++"); }
 
-/*------------------------
-*builder server to client
--------------------------*/
-
-// [WELCO]
 void build_welco(char *buff) { strcpy(buff, "WELCO+++"); }
 
-// [GOBYE]
 void build_gobye(char *buff) { strcpy(buff, "GOBYE+++"); }
 
-// [HELLO]
 void build_hello(char *buff) { strcpy(buff, "HELLO+++"); }
 
-// [FRIE>]
 void build_frie_ok(char *buff) { strcpy(buff, "FRIE>+++"); }
 
-// [FRIE<]
 void build_frie_ko(char *buff) { strcpy(buff, "FRIE<+++"); }
 
-// [MESS>]
 void build_mess_ok(char *buff) { strcpy(buff, "MESS>+++"); }
 
-// [MESS<]
 void build_mess_ko(char *buff) { strcpy(buff, "MESS<+++"); }
 
-// [FLOO>]
 void build_floo_ok(char *buff) { strcpy(buff, "FLOO>+++"); }
 
-// [RLIST num-item] //num item è int così uso %03d
 void build_rlist(char *buff, int num_item) { sprintf(buff, "RLIST %03d+++", num_item); }
 
-// [LINUM id]
 void build_linum(char *buff, const char *id) { sprintf(buff, "LINUM %s+++", id); }
 
-// [SSEM> id mess]
 void build_ssem(char *buff, const char *id, const char *mess) { sprintf(buff, "SSEM> %s %s+++", id, mess); }
 
-// [OOLF> id mess]
 void build_oolf(char *buff, const char *id, const char *mess) { sprintf(buff, "OOLF> %s %s+++", id, mess); }
 
-// [EIRF> id]
 void build_eirf(char *buff, const char *id) { sprintf(buff, "EIRF> %s+++", id); }
 
-// [ACKRF]
 void build_ackrf(char *buff) { strcpy(buff, "ACKRF+++"); }
 
-// [FRIEN id]
 void build_frien(char *buff, const char *id) { sprintf(buff, "FRIEN %s+++", id); }
 
-// [NOFRI id]
 void build_nofri(char *buff, const char *id) { sprintf(buff, "NOFRI %s+++", id); }
 
-// [NOCON]
 void build_nocon(char *buff) { strcpy(buff, "NOCON+++"); }
 
-/*------------------------
- * builder udp notif
- * -----------------------*/
-
-// [YXX]
 void build_udp_notif(char *buff, StreamType type, int stream_count)
 {
     int count = stream_count & 0xFF;

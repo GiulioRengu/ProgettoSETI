@@ -44,7 +44,7 @@ void execute_flood_bfs(Server* server, User* sender, const char* mess)
                     if (stream_add(friend_ptr, sender->id, mess, STREAM_FLOO)==0)
                     {
                         server_send_udp_notification(server, friend_ptr, STREAM_FLOO);
-                        VERB("Flood propagato da %s a %s\n", sender->id, friend_ptr->id);
+                        VERB("Flood propagato da %s a %s", sender->id, friend_ptr->id);
                     }
                 }
             }

@@ -31,7 +31,7 @@ typedef enum{
     STREAM_FLOO,       //[4XX]
 } StreamType;
 
-typedef struct Stream{ //per le notifiche UDP
+typedef struct Stream{
     StreamType type;
     char from_id[ID_LENGTH+1];
     char msg[MSG_LENGTH_MAX+1];
@@ -58,15 +58,10 @@ typedef struct User{
     int stream_count;
 } User;
 
-// typedef struct {
-//     int fd;
-//     char ip[INET6_ADDRSTRLEN];
-// } pendingClient;
-
 typedef struct Server{
     User users[MAX_USERS];
     int client_count;
-    int tcp_fd; //socket TCP listener
+    int tcp_fd;
 
     fd_set master_fds;
     int fdmax;
