@@ -17,11 +17,8 @@ int server_init(Server *server, uint16_t port)
     
     //assegno il socket del server
     server->fdmax=server->tcp_fd;
-
     server->client_count=0;
-
     return 0;
-
 }
 
 void server_run(Server *server)
@@ -48,11 +45,6 @@ void server_run(Server *server)
 }
 
 void server_accept_client(Server *server){
-    if(server->client_count >= MAX_USERS){
-        printf("Errore accettazione cliente: il server ha raggiunto la capienza massima di %d utenti", MAX_USERS);
-        return;
-    }
-
     char client_ip[INET6_ADDRSTRLEN];
     uint16_t client_tcp_port = 0;
     int client_fd = 0;
