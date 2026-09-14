@@ -130,7 +130,7 @@ int net_create_udp_socket(uint16_t port){
         return -1;
     }
 
-    VERB("Socket UDP creato con successo su porta %u", port);
+    VERB("Socket UDP creato con successo su porta %u con supporto %s", port, f == 1 ? "IPv4/IPv6" : "IPv6");
     return sock;
 }
 

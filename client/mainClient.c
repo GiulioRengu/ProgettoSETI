@@ -39,6 +39,10 @@ int main(int argc, char *argv[])
     }
 
     Client client;
+    if (client_start(&client, (uint16_t)udp_port_l) != 0){
+        fprintf(stderr, "Errore: impossibile avviare il client\n");
+        return EXIT_FAILURE;
+    }
     global_client = &client;
 
     struct sigaction sa;
@@ -50,10 +54,6 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    if (client_start(&client, (uint16_t)udp_port_l) != 0){
-        fprintf(stderr, "Errore: impossibile avviare il client\n");
-        return EXIT_FAILURE;
-    }
 
     if (client_connect(&client, server_ip, (uint16_t)server_port_l) != 0){
         fprintf(stderr, "Errore: impossibile connettersi al server con ip %s e porta %lu\n", server_ip, server_port_l);
@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    VERB("Connessione effettuata con successo sul server con ip %s, porta  tcp %lu e porta udp %lu\n", server_ip, server_port_l, udp_port_l);
+    VERB("Connessione effettuata con successo sul server con ip %s, porta  tcp %lu e porta udp %lu", server_ip, server_port_l, udp_port_l);
 
     client_run(&client);
     client_cleanup(&client);

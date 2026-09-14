@@ -11,7 +11,6 @@ typedef struct {
     int udp_fd;
     bool auth;
     bool pending_friend_reply; // EIRF> ricevuto, risposta ancora da inviare
-    bool awaiting_ackrf;       // risposta inviata, in attesa di ACKRF
 } Client;
 
 //Stampa il menu principale
@@ -30,7 +29,7 @@ void client_handle_auth_command(Client *client, const char *line, bool registrat
 int client_handle_stdin_line(Client *client);
 
 //Gestisce un messaggio EIRF> ricevuto dal server
-void client_handle_server_message(Client *client, const char *buf, int len);
+void client_handle_eirf(Client *client, const char *buf, int len);
 
 //Loop principale del client (gestisce stdin, TCP e UDP)
 void client_run(Client *client);

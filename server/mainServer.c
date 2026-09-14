@@ -5,7 +5,7 @@
 #include "server.h"
 
 
-static Server *global_server = NULL;
+Server *global_server = NULL;
 
 void handle_sigint(int sig) {
     (void)sig;
@@ -33,9 +33,12 @@ int main(int argc, char *argv[])
     }
 
     signal(SIGPIPE, SIG_IGN);
-    argc = 0;
-    argv = NULL;
     Server server;
+    if(server_init(&server, port)!=0)
+    {
+        printf("Errore init server\n");
+        return EXIT_FAILURE;
+    }
     
     global_server=&server;
     struct sigaction sa;
@@ -47,11 +50,6 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }  
 
-    if(server_init(&server, port)!=0)
-    {
-        printf("Errore init server\n");
-        return EXIT_FAILURE;
-    }
     VERB("Server attivo su porta: %u", port);
     server_run(&server);
     server_cleanup(&server);

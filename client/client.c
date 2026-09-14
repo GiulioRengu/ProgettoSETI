@@ -87,11 +87,12 @@ void client_handle_auth_command(Client *client, const char *line, bool registrat
     client->password = password;
     int len = registration ? build_regis(buff, id, client->udp_port, password) : build_conne(buff, id, password);
     net_send(client->tcp_fd, buff, len);
+    //client->auth = true;
 }
 
 int client_handle_stdin_line(Client *client)
 {
-    char line[MSG_LENGTH_MAX + ID_LENGTH + 32];
+    char line[MSG_BUFF_MAXSIZE];
     if (fgets(line, sizeof(line), stdin) == NULL) return -1;
 
     line[strcspn(line, "\n")] = '\0'; //toglie \n finale
@@ -103,7 +104,8 @@ int client_handle_stdin_line(Client *client)
     sscanf(line, "%15s", cmd);
 
     if (strcmp(cmd, "regis") == 0 || strcmp(cmd, "conne") == 0){
-        client_handle_auth_command(client, line, strcmp(cmd, "regis") == 0);
+        if(client->auth) printf("Errore, non puoi fare regis/conne se sei gia autenticato\n");
+        else client_handle_auth_command(client, line, (strcmp(cmd, "regis") == 0));
     }
     else if (strcmp(cmd, "frie") == 0){
         sscanf(line, "%*s %8s", arg1);
@@ -130,19 +132,13 @@ int client_handle_stdin_line(Client *client)
         if (client->pending_friend_reply){
             printf("Rispondi prima alla richiesta con OKIRF o NOKRF\n");
         }
-        else if (client->awaiting_ackrf){
-            printf("Attendi ACKRF dal server\n");
-        }
         else{
             build_consu(buff);
             net_send_str(client->tcp_fd, buff);
         }
     }
     else if (strcmp(cmd, "okirf") == 0 || strcmp(cmd, "nokrf") == 0){
-        if (client->awaiting_ackrf){
-            printf("Attendi ACKRF dal server\n");
-        }
-        else if (!client->pending_friend_reply){
+        if (!client->pending_friend_reply){
             printf("Nessuna richiesta EIRF> a cui rispondere\n");
         }
         else{
@@ -152,7 +148,6 @@ int client_handle_stdin_line(Client *client)
                 build_nokrf(buff);
             if (net_send_str(client->tcp_fd, buff) >= 0){
                 client->pending_friend_reply = false;
-                client->awaiting_ackrf = true;
             }
         }
     }
@@ -177,19 +172,19 @@ int client_handle_stdin_line(Client *client)
     return 0;
 }
 
-void client_handle_server_message(Client *client, const char *buf, int len)
+void client_handle_eirf(Client *client, const char *buf, int len)
 {
     if(len==6+ID_LENGTH+3 && memcmp(buf, "EIRF> ", 6)==0 && memcmp(buf+6+ID_LENGTH, "+++", 3)==0){
         char id[ID_LENGTH+1];
         memcpy(id, buf + 6, ID_LENGTH);
         id[ID_LENGTH]='\0';
-        if(net_is_valid_id(id)==0 && !client->awaiting_ackrf){
+        if(net_is_valid_id(id)==0){
             client->pending_friend_reply=true;
             puts("Richiesta di amicizia ricevuta: rispondi con OKIRF o NOKRF");
         }
     }
-    else if(len==8 && memcmp(buf, "ACKRF+++", 8)==0){
-        client->awaiting_ackrf=false;
+    if ((len == 8 && memcmp(buf, "WELCO+++", 8) == 0) || (len == 8 && memcmp(buf, "HELLO+++", 8) == 0)){
+        client->auth = true;
     }
 }
 
@@ -219,7 +214,7 @@ while (1){
                 break;
             }
             printf("\n[SERVER] %s\n", buf);
-            client_handle_server_message(client, buf, r);
+            client_handle_eirf(client, buf, r);
             printf("> ");
             fflush(stdout);
         }
@@ -235,8 +230,7 @@ while (1){
             char buf[8];
             struct sockaddr_storage src_addr;
             socklen_t addr_len = sizeof(src_addr);
-            ssize_t n = recvfrom(client->udp_fd, buf, sizeof(buf) - 1, 0,
-                                    (struct sockaddr *)&src_addr, &addr_len);
+            ssize_t n = recvfrom(client->udp_fd, buf, sizeof(buf) - 1, 0, (struct sockaddr *)&src_addr, &addr_len);
             if (n > 0){
                 buf[n] = '\0';
                 printf("\n[NOTIFICA UDP] %s\n> ", buf);
@@ -245,7 +239,6 @@ while (1){
         }
     }
     client->pending_friend_reply = false;
-    client->awaiting_ackrf = false;
 }
 
 void client_disconnect(Client *client)
@@ -264,7 +257,6 @@ void client_cleanup(Client *client)
     if (client->udp_fd >= 0) close(client->udp_fd);
     client->tcp_fd = -1;
     client->udp_fd = -1;
-    client->auth=0;
+    client->auth=false;
     client->pending_friend_reply = false;
-    client->awaiting_ackrf = false;
 }
