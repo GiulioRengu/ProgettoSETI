@@ -190,10 +190,28 @@ void handle_frie(Server* server, int client_fd, char* msg){
         return;
     }
 
+    if (dest->pending_frie_req && (strcmp(dest->pending_frie_id, src->id) == 0)){
+        VERB("Errore FRIE?: %s deve ancora accettare/rifiutare una richiesta da parte di %s", dest->id, src->id);
+        build_frie_ko(retmsg);
+        if(net_send_str(client_fd, retmsg) < 0) server_disconnect(server, client_fd);
+        return;
+    }
+
     Stream* aux = dest->streams;
     while(aux != NULL){
         if (strcmp(aux->from_id, src->id) == 0 && aux->type == STREAM_FRIEND_REQ){
             VERB("Errore FRIE?: %s ha gia mandato una richiesta di amicizia a %s", src->id, dest->id);
+            build_frie_ko(retmsg);
+            if(net_send_str(client_fd, retmsg) < 0) server_disconnect(server, client_fd);
+            return;
+        }
+        aux = aux->next;
+    }
+
+    aux = src->streams;
+    while(aux != NULL){
+        if (strcmp(aux->from_id, dest->id) == 0 && aux->type == STREAM_FRIEND_REQ){
+            VERB("Errore FRIE?: %s ha gia ricevuto una richiesta di amicizia da %s", src->id, dest->id);
             build_frie_ko(retmsg);
             if(net_send_str(client_fd, retmsg) < 0) server_disconnect(server, client_fd);
             return;
