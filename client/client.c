@@ -106,6 +106,7 @@ int client_handle_stdin_line(Client *client)
         if(client->auth) printf("Errore, non puoi fare regis/conne se sei gia autenticato\n");
         else client_handle_auth_command(client, line, (strcmp(cmd, "regis") == 0));
     }
+    else if (!client->auth) printf("Errore, devi prima autenticarti per poter inviare un messaggio\n");
     else if (strcmp(cmd, "frie") == 0){
         sscanf(line, "%*s %8s", arg1);
         build_frie_req(buff, arg1);
