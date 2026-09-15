@@ -87,7 +87,6 @@ void client_handle_auth_command(Client *client, const char *line, bool registrat
     client->password = password;
     int len = registration ? build_regis(buff, id, client->udp_port, password) : build_conne(buff, id, password);
     net_send(client->tcp_fd, buff, len);
-    //client->auth = true;
 }
 
 int client_handle_stdin_line(Client *client)
@@ -247,6 +246,7 @@ void client_disconnect(Client *client)
     char buf[9];
     build_iquit(buf);
     net_send_str(client->tcp_fd, buf);
+    client->auth = false;
     VERB("Cliente disconnesso correttamente");
 }
 
