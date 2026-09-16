@@ -115,8 +115,11 @@ int client_handle_stdin_line(Client *client)
     else if (strcmp(cmd, "mess") == 0){
         char msgtxt[MSG_LENGTH_MAX] = {0};
         sscanf(line, "%*s %8s %[^\n]", arg1, msgtxt);
-        build_mess_req(buff, arg1, msgtxt);
-        net_send_str(client->tcp_fd, buff);
+        if(net_is_valid_msg(msgtxt) < 0) printf("Errore, il messaggio non puo contenere +++\n");
+        else{
+            build_mess_req(buff, arg1, msgtxt);
+            net_send_str(client->tcp_fd, buff);
+        }
     }
     else if (strcmp(cmd, "floo") == 0){
         char msgtxt[MSG_LENGTH_MAX] = {0};
